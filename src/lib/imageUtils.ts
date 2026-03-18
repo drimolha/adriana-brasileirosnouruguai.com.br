@@ -1,0 +1,37 @@
+export const cropImageTo4by3 = (file: File): Promise<string> => {
+  return new Promise((resolve, reject) => {
+    const reader = new FileReader()
+    reader.onload = (e) => {
+      const img = new Image()
+      img.onload = () => {
+        const canvas = document.createElement('canvas')
+        const ctx = canvas.getContext('2d')
+        if (!ctx) return reject('Failed to get canvas context')
+
+        const targetRatio = 4 / 3
+        let sWidth = img.width
+        let sHeight = img.height
+
+        if (sWidth / sHeight > targetRatio) {
+          sWidth = sHeight * targetRatio
+        } else {
+          sHeight = sWidth / targetRatio
+        }
+
+        const sX = (img.width - sWidth) / 2
+        const sY = (img.height - sHeight) / 2
+
+        // Resize to a standard maximum to save storage space
+        canvas.width = 800
+        canvas.height = 600
+
+        ctx.drawImage(img, sX, sY, sWidth, sHeight, 0, 0, 800, 600)
+        resolve(canvas.toDataURL('image/jpeg', 0.8))
+      }
+      img.onerror = () => reject('Failed to load image')
+      img.src = e.target?.result as string
+    }
+    reader.onerror = () => reject('Failed to read file')
+    reader.readAsDataURL(file)
+  })
+}

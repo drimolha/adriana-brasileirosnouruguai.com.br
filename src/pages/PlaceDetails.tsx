@@ -8,8 +8,9 @@ import {
   Clock,
   ExternalLink,
   CheckCircle2,
+  CalendarDays,
 } from 'lucide-react'
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
 import { useAuth } from '@/context/AuthContext'
 import { useFavorites } from '@/context/FavoritesContext'
@@ -24,6 +25,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogDescription,
+  DialogTrigger,
 } from '@/components/ui/dialog'
 import { Carousel, CarouselContent, CarouselItem } from '@/components/ui/carousel'
 import { cn, DAYS_OF_WEEK, isPlaceOpen } from '@/lib/utils'
@@ -35,28 +37,26 @@ export default function PlaceDetails() {
   const navigate = useNavigate()
   const { currentUser } = useAuth()
   const { isFavorite, toggleFavorite } = useFavorites()
-  const { places } = usePlaces()
+  const { places, recordAccess, recordCouponClick } = usePlaces()
   const { calculateDistance } = useGeo()
   const { isExpired, getPlaceCheckIn, recordCheckIn } = useAccess()
   const [showCheckInDialog, setShowCheckInDialog] = useState(false)
+  const hasTrackedAccess = useRef(false)
 
   const place = places.find((p) => p.id === id)
 
   useEffect(() => {
     if (place) {
       document.title = `${place.name} | O que Fazer no Uruguai?`
-      let metaDescription = document.querySelector('meta[name="description"]')
-      if (!metaDescription) {
-        metaDescription = document.createElement('meta')
-        metaDescription.setAttribute('name', 'description')
-        document.head.appendChild(metaDescription)
+      if (!hasTrackedAccess.current) {
+        recordAccess(place.id)
+        hasTrackedAccess.current = true
       }
-      metaDescription.setAttribute('content', place.description.substring(0, 160))
     }
     return () => {
       document.title = 'O que Fazer no Uruguai by Brasileiros no Uruguai'
     }
-  }, [place])
+  }, [place, recordAccess])
 
   if (!place) return <div className="p-8 text-center text-xl font-bold">Local não encontrado</div>
 
@@ -69,6 +69,10 @@ export default function PlaceDetails() {
 
   const handleShare = () => {
     if (navigator.share) navigator.share({ title: place.name, url: window.location.href })
+  }
+
+  const handleCouponClick = () => {
+    recordCouponClick(place.id)
   }
 
   const handleCheckInConfirm = () => {
@@ -91,6 +95,43 @@ export default function PlaceDetails() {
     toast.success('Check-in realizado com sucesso!', {
       description: 'Este local foi adicionado ao seu histórico de visitas.',
     })
+  }
+
+  const handleAddToCalendar = (type: 'google' | 'apple') => {
+    const start = new Date()
+    start.setDate(start.getDate() + 1) // Tomorrow
+    start.setHours(9, 0, 0)
+    const end = new Date(start)
+    end.setHours(18, 0, 0)
+
+    const formatICSDate = (date: Date) => date.toISOString().replace(/-|:|\.\d+/g, '')
+
+    if (type === 'google') {
+      const url = `https://calendar.google.com/calendar/render?action=TEMPLATE&text=${encodeURIComponent(
+        place.name,
+      )}&dates=${formatICSDate(start)}/${formatICSDate(end)}&details=${encodeURIComponent(
+        place.description,
+      )}&location=${encodeURIComponent(place.address)}`
+      window.open(url, '_blank')
+    } else {
+      const icsContent = `BEGIN:VCALENDAR
+VERSION:2.0
+BEGIN:VEVENT
+SUMMARY:${place.name}
+DESCRIPTION:${place.description}
+LOCATION:${place.address}
+DTSTART:${formatICSDate(start)}
+DTEND:${formatICSDate(end)}
+END:VEVENT
+END:VCALENDAR`
+      const blob = new Blob([icsContent], { type: 'text/calendar;charset=utf-8' })
+      const link = document.createElement('a')
+      link.href = URL.createObjectURL(blob)
+      link.setAttribute('download', `${place.name.replace(/\s+/g, '_')}.ics`)
+      document.body.appendChild(link)
+      link.click()
+      document.body.removeChild(link)
+    }
   }
 
   return (
@@ -175,6 +216,32 @@ export default function PlaceDetails() {
               {place.category}
             </span>
             <div className="flex items-center gap-2">
+              <Dialog>
+                <DialogTrigger asChild>
+                  <button className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-slate-50 transition-transform hover:scale-105">
+                    <CalendarDays className="h-4 w-4 text-slate-600" />
+                  </button>
+                </DialogTrigger>
+                <DialogContent className="sm:max-w-xs">
+                  <DialogHeader>
+                    <DialogTitle className="text-center font-display">
+                      Adicionar ao Calendário
+                    </DialogTitle>
+                    <DialogDescription className="text-center">
+                      Agende sua visita para {place.name}.
+                    </DialogDescription>
+                  </DialogHeader>
+                  <div className="flex flex-col gap-3 mt-4">
+                    <Button onClick={() => handleAddToCalendar('google')} variant="outline">
+                      Google Calendar
+                    </Button>
+                    <Button onClick={() => handleAddToCalendar('apple')} variant="outline">
+                      Apple Calendar (.ics)
+                    </Button>
+                  </div>
+                </DialogContent>
+              </Dialog>
+
               <button
                 onClick={handleShare}
                 className="flex h-10 w-10 items-center justify-center rounded-full border border-slate-100 bg-slate-50 transition-transform hover:scale-105"
@@ -252,7 +319,11 @@ export default function PlaceDetails() {
                   </span>
                 </div>
               )}
-              <Button asChild className="h-12 w-full font-bold text-base shadow-md">
+              <Button
+                asChild
+                className="h-12 w-full font-bold text-base shadow-md"
+                onClick={handleCouponClick}
+              >
                 <a href={place.bookingUrl} target="_blank" rel="noreferrer">
                   Acessar Site e Reservar <ExternalLink className="ml-2 h-4 w-4" />
                 </a>

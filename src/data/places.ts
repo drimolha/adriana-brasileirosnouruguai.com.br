@@ -30,6 +30,10 @@ export interface Place {
   availableDays?: string[]
   bookingUrl?: string
   couponCode?: string
+
+  // Metrics
+  accessCount?: number
+  couponClickCount?: number
 }
 
 export const DEFAULT_CATEGORIES = [
@@ -169,6 +173,8 @@ const GENERATED_TOURS: Place[] = tourLinks.map((t, i) => {
     bookingUrl: `https://brasileirosnouruguai.com.br/passeios/${t.slug}/`,
     couponCode: 'BNU5',
     featured: i < 3,
+    accessCount: Math.floor(Math.random() * 500) + 50, // Mock initial metrics
+    couponClickCount: Math.floor(Math.random() * 200) + 10,
   }
 })
 
@@ -196,6 +202,8 @@ export const DEFAULT_PLACES: Place[] = [
     coordinates: { lat: -34.912, lng: -56.155 },
     operatingHours: createDefaultHours(),
     featured: true,
+    accessCount: 890,
+    couponClickCount: 340,
   },
   {
     id: '3',
@@ -219,5 +227,7 @@ export const DEFAULT_PLACES: Place[] = [
     address: 'Calle de los Suspiros, 45 - Colonia del Sacramento',
     coordinates: { lat: -34.471, lng: -57.852 },
     operatingHours: createDefaultHours(),
+    accessCount: 450,
+    couponClickCount: 120,
   },
 ]

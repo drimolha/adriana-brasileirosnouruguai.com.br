@@ -9,6 +9,8 @@ interface PlacesContextType {
   deletePlace: (id: string) => void
   addCategory: (c: string) => void
   deleteCategory: (c: string) => void
+  recordAccess: (id: string) => void
+  recordCouponClick: (id: string) => void
 }
 
 const PlacesContext = createContext<PlacesContextType | undefined>(undefined)
@@ -19,8 +21,6 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
       const saved = localStorage.getItem('@uruguai:places')
       if (saved) {
         const parsed = JSON.parse(saved)
-        // Ensure any newly added default places (like the new tours) are included
-        // if they haven't been saved yet.
         const missingDefaults = DEFAULT_PLACES.filter(
           (dp) => !parsed.some((p: Place) => p.id === dp.id),
         )
@@ -49,19 +49,6 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     localStorage.setItem('@uruguai:categories', JSON.stringify(categories))
   }, [categories])
 
-  useEffect(() => {
-    const handleStorage = (e: StorageEvent) => {
-      if (e.key === '@uruguai:places' && e.newValue) {
-        setPlaces(JSON.parse(e.newValue))
-      }
-      if (e.key === '@uruguai:categories' && e.newValue) {
-        setCategories(JSON.parse(e.newValue))
-      }
-    }
-    window.addEventListener('storage', handleStorage)
-    return () => window.removeEventListener('storage', handleStorage)
-  }, [])
-
   const addPlace = (p: Place) => setPlaces((prev) => [...prev, p])
   const updatePlace = (id: string, data: Partial<Place>) =>
     setPlaces((prev) => prev.map((p) => (p.id === id ? { ...p, ...data } : p)))
@@ -71,6 +58,20 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     if (!categories.includes(c)) setCategories((prev) => [...prev, c])
   }
   const deleteCategory = (c: string) => setCategories((prev) => prev.filter((cat) => cat !== c))
+
+  const recordAccess = (id: string) => {
+    setPlaces((prev) =>
+      prev.map((p) => (p.id === id ? { ...p, accessCount: (p.accessCount || 0) + 1 } : p)),
+    )
+  }
+
+  const recordCouponClick = (id: string) => {
+    setPlaces((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, couponClickCount: (p.couponClickCount || 0) + 1 } : p,
+      ),
+    )
+  }
 
   return React.createElement(
     PlacesContext.Provider,
@@ -83,6 +84,8 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
         deletePlace,
         addCategory,
         deleteCategory,
+        recordAccess,
+        recordCouponClick,
       },
     },
     children,

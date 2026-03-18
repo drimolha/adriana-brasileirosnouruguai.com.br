@@ -1,14 +1,34 @@
-import { MapPin } from 'lucide-react'
-import { useState } from 'react'
+import { MapPin, Filter } from 'lucide-react'
+import { useState, useMemo } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
 import { useGeo } from '@/context/GeoContext'
 import { Link } from 'react-router-dom'
 import { isPlaceOpen, cn } from '@/lib/utils'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
+import { Label } from '@/components/ui/label'
 
 export default function MapView() {
-  const { places } = usePlaces()
+  const { places, categories } = usePlaces()
   const { location } = useGeo()
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null)
+
+  const [categoryFilter, setCategoryFilter] = useState('Todas')
+  const [openNow, setOpenNow] = useState(false)
+
+  const filteredPlaces = useMemo(() => {
+    return places.filter((p) => {
+      if (categoryFilter !== 'Todas' && p.category !== categoryFilter) return false
+      if (openNow && !isPlaceOpen(p.operatingHours)) return false
+      return true
+    })
+  }, [places, categoryFilter, openNow])
 
   const lats = places.map((p) => p.coordinates.lat)
   const lngs = places.map((p) => p.coordinates.lng)
@@ -33,13 +53,39 @@ export default function MapView() {
       className="animate-fade-in relative h-full w-full overflow-hidden bg-[#e5e3df]"
       onClick={() => setSelectedPlace(null)}
     >
+      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col sm:flex-row gap-3 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/50 w-[90%] max-w-md">
+        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+          <SelectTrigger className="bg-white">
+            <div className="flex items-center gap-2">
+              <Filter className="h-4 w-4 text-muted-foreground" />
+              <SelectValue placeholder="Categoria" />
+            </div>
+          </SelectTrigger>
+          <SelectContent>
+            <SelectItem value="Todas">Todas as Categorias</SelectItem>
+            {categories.map((c) => (
+              <SelectItem key={c} value={c}>
+                {c}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+
+        <div className="flex items-center justify-between sm:justify-start gap-3 bg-white px-4 py-2 rounded-xl border sm:w-auto h-10">
+          <Label htmlFor="map-open-now" className="cursor-pointer font-bold text-slate-700 text-sm">
+            Aberto Agora
+          </Label>
+          <Switch id="map-open-now" checked={openNow} onCheckedChange={setOpenNow} />
+        </div>
+      </div>
+
       <img
         src="https://img.usecurling.com/p/1200/800?q=map&color=gray"
         alt="Map background"
         className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-multiply"
       />
 
-      {places.map((place) => {
+      {filteredPlaces.map((place) => {
         const isOpen = isPlaceOpen(place.operatingHours)
         const isFeatured = place.featured
 

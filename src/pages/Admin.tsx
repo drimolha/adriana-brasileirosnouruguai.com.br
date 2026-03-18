@@ -3,11 +3,12 @@ import { AdminPlaceForm } from '@/components/AdminPlaceForm'
 import { AdminCategoryManager } from '@/components/AdminCategoryManager'
 import { AdminPlacesList } from '@/components/AdminPlacesList'
 import { AdminLogin } from '@/components/AdminLogin'
+import { AdminDashboard } from '@/components/AdminDashboard'
 import { Button } from '@/components/ui/button'
 import { useAccess } from '@/context/AccessContext'
 import { usePlaces } from '@/context/PlacesContext'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { LogOut, Plus, Tags, List } from 'lucide-react'
+import { LogOut, Plus, Tags, List, LayoutDashboard } from 'lucide-react'
 import logoUrl from '@/assets/favicon-bnu-9afaa.jpg'
 import { Place } from '@/data/places'
 import { toast } from 'sonner'
@@ -15,7 +16,7 @@ import { toast } from 'sonner'
 export default function Admin() {
   const { isGranted, grantAccess, revokeAccess } = useAccess()
   const { places, addPlace, updatePlace, deletePlace, categories } = usePlaces()
-  const [activeTab, setActiveTab] = useState('list')
+  const [activeTab, setActiveTab] = useState('dashboard')
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined)
 
   if (!isGranted) {
@@ -84,6 +85,13 @@ export default function Admin() {
       <Tabs value={activeTab} onValueChange={handleTabChange} className="w-full space-y-6">
         <TabsList className="w-full justify-start h-auto p-1 bg-muted/50 overflow-x-auto flex-nowrap hide-scrollbar">
           <TabsTrigger
+            value="dashboard"
+            className="gap-2 py-2.5 px-4 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm"
+          >
+            <LayoutDashboard className="h-4 w-4" />
+            <span className="hidden sm:inline">Dashboard</span>
+          </TabsTrigger>
+          <TabsTrigger
             value="list"
             className="gap-2 py-2.5 px-4 rounded-xl data-[state=active]:bg-background data-[state=active]:shadow-sm"
           >
@@ -106,6 +114,10 @@ export default function Admin() {
           </TabsTrigger>
         </TabsList>
 
+        <TabsContent value="dashboard" className="mt-0 outline-none">
+          <AdminDashboard />
+        </TabsContent>
+
         <TabsContent value="list" className="mt-0 outline-none">
           <div className="mb-4">
             <h2 className="text-xl font-semibold">Lista de Estabelecimentos e Passeios</h2>
@@ -113,7 +125,12 @@ export default function Admin() {
               Gerencie todos os locais ativos disponíveis no aplicativo.
             </p>
           </div>
-          <AdminPlacesList places={places} onEdit={handleEdit} onDelete={handleDelete} />
+          <AdminPlacesList
+            places={places}
+            categories={categories}
+            onEdit={handleEdit}
+            onDelete={handleDelete}
+          />
         </TabsContent>
 
         <TabsContent value="form" className="mt-0 outline-none">

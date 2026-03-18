@@ -11,6 +11,12 @@ export function ProximityAlerts() {
   const alerted = useRef<Set<string>>(new Set())
 
   useEffect(() => {
+    if ('Notification' in window && Notification.permission === 'default') {
+      Notification.requestPermission()
+    }
+  }, [])
+
+  useEffect(() => {
     if (!location) return
 
     places.forEach((place) => {
@@ -23,8 +29,13 @@ export function ProximityAlerts() {
       const dist = calculateDistance(place.coordinates.lat, place.coordinates.lng)
       if (dist !== null && dist <= 0.5) {
         alerted.current.add(place.id)
-        toast.message(`Alerta de Proximidade`, {
-          description: `Você está perto de ${place.name}! Aproveite seu cupom de desconto.`,
+
+        const alertTitle = `Desconto Próximo: ${place.name}`
+        const alertBody = `Aproveite seu cupom de ${place.discountBadge}!`
+
+        // In-app toast
+        toast.message(alertTitle, {
+          description: alertBody,
           style: {
             backgroundColor: '#FFD700',
             color: '#000',
@@ -33,6 +44,14 @@ export function ProximityAlerts() {
           },
           duration: 10000,
         })
+
+        // Native Push Notification
+        if ('Notification' in window && Notification.permission === 'granted') {
+          new Notification(alertTitle, {
+            body: alertBody,
+            icon: '/favicon.ico',
+          })
+        }
       }
     })
   }, [location, places, placeCheckIns, calculateDistance])
