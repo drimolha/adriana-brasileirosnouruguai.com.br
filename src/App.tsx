@@ -7,13 +7,13 @@ import { AccessProvider } from '@/context/AccessContext'
 import { GeoProvider } from '@/context/GeoContext'
 import { PlacesProvider } from '@/context/PlacesContext'
 
-import Layout from './components/Layout'
-import Index from './pages/Index'
-import PlaceDetails from './pages/PlaceDetails'
-import Favorites from './pages/Favorites'
-import MapView from './pages/MapView'
-import Admin from './pages/Admin'
-import NotFound from './pages/NotFound'
+import { Layout } from '@/components/Layout'
+import Index from '@/pages/Index'
+import PlaceDetails from '@/pages/PlaceDetails'
+import Favorites from '@/pages/Favorites'
+import MapView from '@/pages/MapView'
+import Admin from '@/pages/Admin'
+import NotFound from '@/pages/NotFound'
 
 const App = () => (
   <BrowserRouter future={{ v7_startTransition: false, v7_relativeSplatPath: false }}>
