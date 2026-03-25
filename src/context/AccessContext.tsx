@@ -73,8 +73,8 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
       if (!localStorage.getItem(emailSentKey)) {
         const visitedCount = Object.keys(placeCheckIns).length
         toast.success('Resumo da Viagem Enviado!', {
-          description: `Enviamos um e-mail com os ${visitedCount} locais que você visitou. Guarde as memórias e compartilhe com os amigos!`,
-          duration: 10000,
+          description: `Um e-mail automático foi enviado para ${currentUser.email} contendo a lista de todos os ${visitedCount} locais e passeios que você visitou. Guarde as memórias e compartilhe com os amigos!`,
+          duration: 12000,
         })
         localStorage.setItem(emailSentKey, 'true')
       }

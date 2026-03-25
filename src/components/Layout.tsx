@@ -201,11 +201,11 @@ export function Layout() {
         </div>
       </header>
 
-      <main className="flex-1 w-full bg-slate-50/50 dark:bg-slate-900/50">
+      <main className="flex-1 flex flex-col relative w-full bg-slate-50/50 dark:bg-slate-900/50 min-h-0">
         {isBlockedPath ? <AccessExpired /> : <Outlet />}
       </main>
 
-      <footer className="border-t py-6 bg-card mt-auto">
+      <footer className="border-t py-6 bg-card mt-auto z-10 relative">
         <div className="container mx-auto px-4 flex flex-col md:flex-row items-center justify-between gap-4">
           <div className="flex flex-col items-center md:items-start gap-2">
             <div className="flex items-center gap-3">

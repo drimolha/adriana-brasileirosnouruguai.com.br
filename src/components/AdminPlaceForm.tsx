@@ -207,11 +207,12 @@ export function AdminPlaceForm({ initialData, categories, onSave, onCancel }: Pr
           />
         </div>
         <div className="space-y-2">
-          <Label>Endereço / Localização do Encontro</Label>
+          <Label>Endereço do Google Maps</Label>
           <div className="flex gap-2">
             <Input
               value={formData.address || ''}
               onChange={(e) => handleChange('address', e.target.value)}
+              placeholder="Cole o endereço aqui..."
               required
               className="flex-1"
             />
@@ -220,10 +221,11 @@ export function AdminPlaceForm({ initialData, categories, onSave, onCancel }: Pr
               variant="outline"
               onClick={fetchCoordinatesByAddress}
               disabled={isFetchingCoords}
-              className="shrink-0"
+              className="shrink-0 gap-2 font-medium"
               title="Buscar Coordenadas por Endereço"
             >
               <Search className="h-4 w-4 text-primary" />
+              Buscar Lat/Lng
             </Button>
           </div>
         </div>

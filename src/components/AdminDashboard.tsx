@@ -62,12 +62,12 @@ export function AdminDashboard() {
           <h2 className="text-lg font-bold">Relatórios de Desempenho</h2>
           <p className="text-sm text-muted-foreground">Exporte os dados para análise detalhada.</p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={exportPDF} className="gap-2 bg-background">
-            <FileText className="h-4 w-4" /> Exportar PDF
+        <div className="flex flex-wrap gap-2">
+          <Button variant="outline" onClick={exportPDF} className="gap-2 bg-background font-medium">
+            <FileText className="h-4 w-4" /> Exportar Relatórios (PDF)
           </Button>
-          <Button onClick={exportExcel} className="gap-2">
-            <Download className="h-4 w-4" /> Exportar Excel
+          <Button onClick={exportExcel} className="gap-2 font-medium">
+            <Download className="h-4 w-4" /> Baixar Estabelecimentos e Avaliações (Excel)
           </Button>
         </div>
       </div>

@@ -58,9 +58,18 @@ export default function MapView() {
 
   return (
     <div
-      className="animate-fade-in relative h-full w-full overflow-hidden bg-[#eef0f2]"
+      className="animate-fade-in relative flex-1 w-full min-h-[calc(100vh-140px)] overflow-hidden bg-[#eef0f2]"
       onClick={() => setSelectedPlace(null)}
     >
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.08]"
+        style={{
+          backgroundImage: `url('https://img.usecurling.com/p/1200/1200?q=street%20map&color=gray')`,
+          backgroundSize: 'cover',
+          backgroundPosition: 'center',
+          backgroundRepeat: 'no-repeat',
+        }}
+      ></div>
       <div
         className="pointer-events-none absolute inset-0 opacity-[0.03]"
         style={{

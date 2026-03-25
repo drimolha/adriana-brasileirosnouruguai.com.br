@@ -20,8 +20,8 @@ export function AccessExpired() {
         <Mail className="h-8 w-8 text-primary mb-3" />
         <h3 className="font-bold text-slate-900 mb-2">Resumo da Viagem Enviado</h3>
         <p className="text-sm text-slate-600">
-          Enviamos um e-mail automático com o resumo de todos os locais que você visitou e fez
-          check-in. Guarde essa lembrança e não esqueça de nos recomendar para seus amigos!
+          Enviamos um e-mail automático com a lista de todos os locais e passeios que você visitou e
+          fez check-in. Guarde essa lembrança e não esqueça de nos recomendar para seus amigos!
         </p>
       </div>
 
