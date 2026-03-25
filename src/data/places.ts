@@ -7,6 +7,13 @@ export interface DailyHours {
   closeTime: string
 }
 
+export interface FlashOffer {
+  percentage: string
+  description: string
+  expiresAt: number
+  durationLabel: string
+}
+
 export interface Place {
   id: string
   type: PlaceType
@@ -38,6 +45,9 @@ export interface Place {
   // Metrics
   accessCount?: number
   couponClickCount?: number
+
+  // Flash Offer
+  flashOffer?: FlashOffer
 }
 
 export const DEFAULT_CATEGORIES = [
@@ -177,7 +187,7 @@ const GENERATED_TOURS: Place[] = tourLinks.map((t, i) => {
     bookingUrl: `https://brasileirosnouruguai.com.br/passeios/${t.slug}/`,
     couponCode: 'BNU5',
     featured: i < 3,
-    accessCount: Math.floor(Math.random() * 500) + 50, // Mock initial metrics
+    accessCount: Math.floor(Math.random() * 500) + 50,
     couponClickCount: Math.floor(Math.random() * 200) + 10,
   }
 })

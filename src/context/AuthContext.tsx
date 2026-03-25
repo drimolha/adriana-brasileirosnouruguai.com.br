@@ -5,11 +5,14 @@ export interface User {
   id: string
   email: string
   firstLoginAt: number
+  role?: 'user' | 'establishment'
+  managedPlaceId?: string
 }
 
 interface AuthContextType {
   currentUser: User | null
   login: (email: string, pass: string) => void
+  loginEstablishment: (placeId: string, pass: string) => void
   register: (email: string, pass: string) => void
   logout: () => void
 }
@@ -40,13 +43,36 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const firstLoginAt = existing ? existing.firstLoginAt : Date.now()
 
     if (!existing) {
-      users[email] = { email, firstLoginAt }
+      users[email] = { email, firstLoginAt, role: 'user' }
       localStorage.setItem('@uruguai:users_db', JSON.stringify(users))
     }
 
-    setCurrentUser({ id: email, email, firstLoginAt })
+    setCurrentUser({ id: email, email, firstLoginAt, role: 'user' })
     toast.success('Login realizado com sucesso!', {
       description: 'Bem-vindo(a) de volta ao Uruguai.',
+    })
+  }
+
+  const loginEstablishment = (placeId: string, _: string) => {
+    const users = JSON.parse(localStorage.getItem('@uruguai:users_db') || '{}')
+    const email = `empresa_${placeId}@bnu.com`
+    const existing = users[email]
+    const firstLoginAt = existing ? existing.firstLoginAt : Date.now()
+
+    if (!existing) {
+      users[email] = { email, firstLoginAt, role: 'establishment', managedPlaceId: placeId }
+      localStorage.setItem('@uruguai:users_db', JSON.stringify(users))
+    }
+
+    setCurrentUser({
+      id: email,
+      email,
+      firstLoginAt,
+      role: 'establishment',
+      managedPlaceId: placeId,
+    })
+    toast.success('Login empresarial realizado com sucesso!', {
+      description: 'Bem-vindo ao seu painel de gestão.',
     })
   }
 
@@ -54,10 +80,10 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
     const users = JSON.parse(localStorage.getItem('@uruguai:users_db') || '{}')
     const firstLoginAt = Date.now()
 
-    users[email] = { email, firstLoginAt }
+    users[email] = { email, firstLoginAt, role: 'user' }
     localStorage.setItem('@uruguai:users_db', JSON.stringify(users))
 
-    setCurrentUser({ id: email, email, firstLoginAt })
+    setCurrentUser({ id: email, email, firstLoginAt, role: 'user' })
     toast.success('Conta criada com sucesso!', {
       description: 'Sua jornada de descontos começa agora.',
     })
@@ -66,13 +92,13 @@ export function AuthProvider({ children }: { children: React.ReactNode }) {
   const logout = () => {
     setCurrentUser(null)
     toast.success('Você saiu da conta.', {
-      description: 'Seus dados estão salvos com segurança.',
+      description: 'Sessão encerrada com segurança.',
     })
   }
 
   return React.createElement(
     AuthContext.Provider,
-    { value: { currentUser, login, register, logout } },
+    { value: { currentUser, login, loginEstablishment, register, logout } },
     children,
   )
 }

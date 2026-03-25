@@ -9,6 +9,7 @@ import { Badge } from '@/components/ui/badge'
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 import { isPlaceOpen } from '@/lib/utils'
+import { Zap, Timer } from 'lucide-react'
 
 export default function Index() {
   const { places, categories } = usePlaces()
@@ -23,6 +24,10 @@ export default function Index() {
   const CITIES = ['Todas', 'Montevideo', 'Punta del Este', 'Colonia del Sacramento']
   const DISTANCES = ['Qualquer', '5km', '10km', '20km', '50km']
   const CATEGORIES = ['Todas', ...categories]
+
+  const activeFlashOffers = useMemo(() => {
+    return places.filter((p) => p.flashOffer && p.flashOffer.expiresAt > Date.now())
+  }, [places])
 
   const filteredPlaces = useMemo(() => {
     let result = places
@@ -52,6 +57,44 @@ export default function Index() {
 
   return (
     <div className="flex flex-col gap-6 pb-8 pt-4 md:px-8 md:pt-8">
+      {activeFlashOffers.length > 0 && (
+        <section className="px-4 md:px-0 mb-2 animate-fade-in-up">
+          <h2 className="mb-3 font-display text-xl font-bold text-red-600 flex items-center gap-2">
+            <Zap className="h-5 w-5 fill-current" /> Ofertas Relâmpago
+          </h2>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {activeFlashOffers.map((place) => (
+              <Link
+                key={`flash-${place.id}`}
+                to={`/place/${place.id}`}
+                className="group relative rounded-2xl border border-red-100 bg-red-50 p-3 shadow-sm transition-all hover:shadow-md hover:border-red-200 overflow-hidden block"
+              >
+                <div className="flex gap-4">
+                  <div className="h-20 w-20 rounded-xl overflow-hidden shrink-0 bg-slate-100 border border-red-100/50">
+                    <img
+                      src={place.coverImage}
+                      alt={place.name}
+                      className="h-full w-full object-cover transition-transform group-hover:scale-105"
+                    />
+                  </div>
+                  <div className="flex-1 flex flex-col justify-center">
+                    <div className="flex items-center gap-1 text-[10px] font-bold uppercase tracking-wider text-red-600 bg-red-100 w-fit px-2 py-0.5 rounded-full mb-1">
+                      <Timer className="h-3 w-3" /> {place.flashOffer?.durationLabel}
+                    </div>
+                    <h3 className="font-bold text-slate-900 leading-tight line-clamp-1">
+                      {place.name}
+                    </h3>
+                    <p className="text-red-600 font-black text-xl">
+                      {place.flashOffer?.percentage}% OFF
+                    </p>
+                  </div>
+                </div>
+              </Link>
+            ))}
+          </div>
+        </section>
+      )}
+
       {featured.length > 0 && (
         <section className="px-4 md:px-0">
           <h2 className="mb-3 font-display text-xl font-bold text-slate-900 md:text-2xl">

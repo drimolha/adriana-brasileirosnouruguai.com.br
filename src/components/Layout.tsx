@@ -1,13 +1,5 @@
 import { Link, Outlet, useLocation } from 'react-router-dom'
-import {
-  Compass,
-  Heart,
-  Map as MapIcon,
-  Menu,
-  Award,
-  ExternalLink,
-  ShieldCheck,
-} from 'lucide-react'
+import { Compass, Heart, Map as MapIcon, Menu, Award, ExternalLink } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
   Sheet,
@@ -67,8 +59,14 @@ export function Layout() {
     (blockedPaths.includes(location.pathname) || location.pathname.startsWith('/place/'))
 
   return (
-    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans">
-      <header className="sticky top-0 z-50 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
+    <div className="min-h-screen bg-background text-foreground flex flex-col font-sans relative">
+      <div className="w-full bg-slate-900 text-slate-400 py-1.5 px-4 flex justify-end text-[10px] font-bold uppercase tracking-widest z-50 relative">
+        <Link to="/empresa" className="hover:text-white transition-colors">
+          Acesso Empresa
+        </Link>
+      </div>
+
+      <header className="sticky top-0 z-40 w-full border-b bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 shadow-sm">
         <div className="container mx-auto px-4 h-16 flex items-center justify-between">
           <Link to="/" className="flex items-center gap-3 group">
             <div className="h-10 w-10 overflow-hidden rounded-full shadow-sm group-hover:scale-105 transition-transform border border-border/50 bg-white shrink-0">
@@ -113,17 +111,6 @@ export function Layout() {
                 </Button>
               )
             })}
-
-            <Button
-              asChild
-              size="sm"
-              className="ml-2 flex items-center gap-2 rounded-full px-4 transition-all duration-300 bg-primary text-white hover:bg-secondary border-b-2 border-brand-yellow shadow-sm"
-            >
-              <Link to="/admin">
-                <ShieldCheck className="h-4 w-4 text-brand-yellow" />
-                <span className="font-bold">Painel Admin</span>
-              </Link>
-            </Button>
           </nav>
 
           {/* Mobile Nav */}
@@ -181,18 +168,6 @@ export function Layout() {
                         </SheetTrigger>
                       )
                     })}
-
-                    <SheetTrigger asChild>
-                      <Button
-                        asChild
-                        className="mt-2 w-full justify-start gap-3 rounded-xl h-12 transition-all bg-primary text-white hover:bg-secondary border-l-4 border-brand-yellow shadow-sm"
-                      >
-                        <Link to="/admin">
-                          <ShieldCheck className="h-5 w-5 text-brand-yellow" />
-                          <span className="font-bold text-base">Painel Admin</span>
-                        </Link>
-                      </Button>
-                    </SheetTrigger>
                   </nav>
                 </div>
               </SheetContent>

@@ -11,6 +11,8 @@ import {
   CalendarDays,
   Instagram,
   Globe,
+  Zap,
+  Timer,
 } from 'lucide-react'
 import { useState, useEffect, useRef } from 'react'
 import { toast } from 'sonner'
@@ -69,6 +71,7 @@ export default function PlaceDetails() {
   const displayDistance = dist ? `${dist.toFixed(1)} km` : 'Calculando...'
   const checkInTime = getPlaceCheckIn(place.id)
   const isOpen = !isTour && isPlaceOpen(place.operatingHours)
+  const isFlashOfferActive = place.flashOffer && place.flashOffer.expiresAt > Date.now()
 
   const handleShare = () => {
     if (navigator.share) navigator.share({ title: place.name, url: window.location.href })
@@ -330,6 +333,24 @@ END:VCALENDAR`
 
           {!isTour && checkInTime && <PlaceCheckInTicket checkInTime={checkInTime} />}
 
+          {isFlashOfferActive && (
+            <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm relative overflow-hidden animate-in fade-in zoom-in duration-500">
+              <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider flex items-center gap-1">
+                <Timer className="h-3 w-3" /> {place.flashOffer?.durationLabel}
+              </div>
+              <div className="mb-2 flex items-center gap-2 text-red-600">
+                <Zap className="h-6 w-6 fill-current drop-shadow-sm" />
+                <h3 className="font-display text-lg font-bold">Oferta Relâmpago!</h3>
+              </div>
+              <p className="mb-3 text-4xl font-black text-red-600 tracking-tight">
+                {place.flashOffer?.percentage}% OFF
+              </p>
+              <p className="text-sm font-medium leading-relaxed text-red-800 bg-white/50 p-3 rounded-xl border border-red-100">
+                {place.flashOffer?.description}
+              </p>
+            </div>
+          )}
+
           {isTour ? (
             <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-5">
               <div className="mb-3 flex items-center gap-2">
@@ -360,16 +381,18 @@ END:VCALENDAR`
               </Button>
             </div>
           ) : (
-            <div className="mb-8 rounded-2xl border border-brand-yellow/50 bg-brand-yellow/10 p-5 shadow-sm">
-              <div className="mb-2 flex items-center gap-2 text-slate-900">
-                <Ticket className="h-6 w-6 text-brand-yellow drop-shadow-sm" />
-                <h3 className="font-display text-lg font-bold">Oferta Exclusiva</h3>
+            !isFlashOfferActive && (
+              <div className="mb-8 rounded-2xl border border-brand-yellow/50 bg-brand-yellow/10 p-5 shadow-sm">
+                <div className="mb-2 flex items-center gap-2 text-slate-900">
+                  <Ticket className="h-6 w-6 text-brand-yellow drop-shadow-sm" />
+                  <h3 className="font-display text-lg font-bold">Oferta Exclusiva</h3>
+                </div>
+                <p className="mb-3 text-2xl font-black text-slate-900">{place.discountBadge}</p>
+                <p className="text-sm font-medium leading-relaxed text-slate-700">
+                  {place.discountDescription}
+                </p>
               </div>
-              <p className="mb-3 text-2xl font-black text-slate-900">{place.discountBadge}</p>
-              <p className="text-sm font-medium leading-relaxed text-slate-700">
-                {place.discountDescription}
-              </p>
-            </div>
+            )
           )}
 
           {!isTour && place.operatingHours && place.operatingHours.length > 0 && (

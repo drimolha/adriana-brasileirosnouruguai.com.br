@@ -1,5 +1,5 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
-import { Place, DEFAULT_PLACES, DEFAULT_CATEGORIES } from '@/data/places'
+import { Place, FlashOffer, DEFAULT_PLACES, DEFAULT_CATEGORIES } from '@/data/places'
 
 interface PlacesContextType {
   places: Place[]
@@ -11,6 +11,7 @@ interface PlacesContextType {
   deleteCategory: (c: string) => void
   recordAccess: (id: string) => void
   recordCouponClick: (id: string) => void
+  createFlashOffer: (id: string, offer: FlashOffer | undefined) => void
 }
 
 const PlacesContext = createContext<PlacesContextType | undefined>(undefined)
@@ -22,7 +23,6 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
       if (saved) {
         let parsed = JSON.parse(saved)
 
-        // Migration to fix Parrilla del Sur Address data mismatch if user already cached it
         parsed = parsed.map((p: Place) => {
           if (p.id === '1' && p.address && p.address.includes('Rambla')) {
             return {
@@ -86,6 +86,10 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const createFlashOffer = (id: string, offer: FlashOffer | undefined) => {
+    setPlaces((prev) => prev.map((p) => (p.id === id ? { ...p, flashOffer: offer } : p)))
+  }
+
   return React.createElement(
     PlacesContext.Provider,
     {
@@ -99,6 +103,7 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
         deleteCategory,
         recordAccess,
         recordCouponClick,
+        createFlashOffer,
       },
     },
     children,
