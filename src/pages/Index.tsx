@@ -18,11 +18,11 @@ export default function Index() {
 
   const [selectedCity, setSelectedCity] = useState('Todas')
   const [selectedCategory, setSelectedCategory] = useState('Todas')
-  const [maxDistance, setMaxDistance] = useState('Qualquer')
+  const [selectedType, setSelectedType] = useState('Todos')
   const [openNowOnly, setOpenNowOnly] = useState(false)
 
   const CITIES = ['Todas', 'Montevideo', 'Punta del Este', 'Colonia del Sacramento']
-  const DISTANCES = ['Qualquer', '5km', '10km', '20km', '50km']
+  const TYPES = ['Todos', 'Locais', 'Passeio']
   const CATEGORIES = ['Todas', ...categories]
 
   const activeFlashOffers = useMemo(() => {
@@ -34,12 +34,10 @@ export default function Index() {
     if (selectedCity !== 'Todas') result = result.filter((p) => p.city === selectedCity)
     if (selectedCategory !== 'Todas') result = result.filter((p) => p.category === selectedCategory)
 
-    if (maxDistance !== 'Qualquer') {
-      const limit = parseInt(maxDistance.replace('km', ''))
-      result = result.filter((p) => {
-        const d = calculateDistance(p.coordinates.lat, p.coordinates.lng)
-        return d !== null && d <= limit
-      })
+    if (selectedType === 'Locais') {
+      result = result.filter((p) => p.type !== 'tour')
+    } else if (selectedType === 'Passeio') {
+      result = result.filter((p) => p.type === 'tour')
     }
 
     if (openNowOnly) {
@@ -51,7 +49,7 @@ export default function Index() {
       const distB = calculateDistance(b.coordinates.lat, b.coordinates.lng) || 9999
       return distA - distB
     })
-  }, [places, selectedCity, selectedCategory, maxDistance, openNowOnly, calculateDistance])
+  }, [places, selectedCity, selectedCategory, selectedType, openNowOnly, calculateDistance])
 
   const featured = places.filter((p) => p.featured)
 
@@ -175,19 +173,19 @@ export default function Index() {
           <div className="hide-scrollbar -mx-4 flex overflow-x-auto px-4 md:mx-0 md:px-0">
             <div className="flex items-center gap-2">
               <span className="text-xs font-bold text-slate-400 uppercase tracking-wider">
-                Distância:
+                Tipo:
               </span>
-              {DISTANCES.map((dist) => (
+              {TYPES.map((type) => (
                 <button
-                  key={dist}
-                  onClick={() => setMaxDistance(dist)}
+                  key={type}
+                  onClick={() => setSelectedType(type)}
                   className={`whitespace-nowrap rounded-full px-4 py-1.5 text-sm font-medium transition-all ${
-                    maxDistance === dist
+                    selectedType === type
                       ? 'bg-primary text-primary-foreground shadow-md'
                       : 'bg-slate-100 text-slate-600 hover:bg-slate-200'
                   }`}
                 >
-                  {dist}
+                  {type}
                 </button>
               ))}
             </div>

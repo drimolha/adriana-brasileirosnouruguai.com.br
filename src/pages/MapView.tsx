@@ -31,6 +31,9 @@ export default function MapView() {
 
   const filteredPlaces = useMemo(() => {
     return places.filter((p) => {
+      // Hide tours/passeios from the map view
+      if (p.type === 'tour' || p.category.toLowerCase() === 'passeios') return false
+
       if (categoryFilter !== 'Todas' && p.category !== categoryFilter) return false
       if (openNow && !isPlaceOpen(p.operatingHours)) return false
       return true
@@ -138,11 +141,13 @@ export default function MapView() {
           </SelectTrigger>
           <SelectContent>
             <SelectItem value="Todas">Todas as Categorias</SelectItem>
-            {categories.map((c) => (
-              <SelectItem key={c} value={c}>
-                {c}
-              </SelectItem>
-            ))}
+            {categories
+              .filter((c) => c.toLowerCase() !== 'passeios')
+              .map((c) => (
+                <SelectItem key={c} value={c}>
+                  {c}
+                </SelectItem>
+              ))}
           </SelectContent>
         </Select>
 
