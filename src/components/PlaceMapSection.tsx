@@ -1,4 +1,5 @@
 import { MapPin } from 'lucide-react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,6 +8,7 @@ import {
   DialogTrigger,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
+import { Skeleton } from '@/components/ui/skeleton'
 
 interface MapSectionProps {
   lat: number
@@ -16,19 +18,33 @@ interface MapSectionProps {
 }
 
 export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps) {
+  const [isLoading, setIsLoading] = useState(true)
+
   return (
     <div className="overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
-      <div className="relative h-40 w-full bg-slate-100">
-        <img
-          src={`https://img.usecurling.com/p/800/400?q=map&color=blue`}
-          alt="Map placeholder"
-          className="h-full w-full object-cover opacity-50"
-        />
-        <div className="absolute left-1/2 top-1/2 -translate-x-1/2 -translate-y-1/2 animate-float">
-          <MapPin className="h-10 w-10 fill-primary/20 text-primary drop-shadow-md" />
-        </div>
+      <div className="relative h-56 w-full bg-slate-100">
+        {isLoading && (
+          <div className="absolute inset-0 flex items-center justify-center bg-slate-100">
+            <Skeleton className="absolute inset-0 h-full w-full" />
+            <MapPin className="relative h-8 w-8 animate-pulse text-slate-400" />
+          </div>
+        )}
+        <iframe
+          title={`Mapa de ${address}`}
+          width="100%"
+          height="100%"
+          style={{ border: 0 }}
+          loading="lazy"
+          allowFullScreen
+          referrerPolicy="no-referrer-when-downgrade"
+          src={`https://maps.google.com/maps?q=${lat},${lng}&t=m&z=16&output=embed&iwloc=near`}
+          className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${
+            isLoading ? 'opacity-0' : 'opacity-100'
+          }`}
+          onLoad={() => setIsLoading(false)}
+        ></iframe>
       </div>
-      <div className="flex items-center justify-between p-4">
+      <div className="relative z-10 flex items-center justify-between border-t border-slate-100 bg-white p-4">
         <div className="min-w-0 flex-1 pr-4">
           <p className="truncate font-bold text-slate-900">{address}</p>
           <p className="mt-0.5 text-sm font-medium text-slate-500">A {distance} de você</p>
@@ -45,7 +61,7 @@ export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps
           </DialogTrigger>
           <DialogContent className="sm:max-w-xs">
             <DialogHeader>
-              <DialogTitle className="text-center font-display">Abrir navegação com</DialogTitle>
+              <DialogTitle className="font-display text-center">Abrir navegação com</DialogTitle>
             </DialogHeader>
             <div className="mt-4 flex flex-col gap-3">
               <Button asChild className="h-12 text-lg font-medium">

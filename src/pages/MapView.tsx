@@ -1,4 +1,4 @@
-import { MapPin, Filter } from 'lucide-react'
+import { MapPin, Filter, Navigation } from 'lucide-react'
 import { useState, useMemo } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
 import { useGeo } from '@/context/GeoContext'
@@ -30,30 +30,42 @@ export default function MapView() {
     })
   }, [places, categoryFilter, openNow])
 
+  // Use full places array for bounds so the map doesn't jump around when filtering
   const lats = places.map((p) => p.coordinates.lat)
   const lngs = places.map((p) => p.coordinates.lng)
 
-  const minLat = places.length ? Math.min(...lats) - 0.1 : -35.1
-  const maxLat = places.length ? Math.max(...lats) + 0.1 : -34.0
-  const minLng = places.length ? Math.min(...lngs) - 0.1 : -58.5
-  const maxLng = places.length ? Math.max(...lngs) + 0.1 : -54.0
+  const minLat = places.length ? Math.min(...lats) - 0.05 : -35.1
+  const maxLat = places.length ? Math.max(...lats) + 0.05 : -34.0
+  const minLng = places.length ? Math.min(...lngs) - 0.05 : -58.5
+  const maxLng = places.length ? Math.max(...lngs) + 0.05 : -54.0
+
+  const latRange = maxLat - minLat
+  const lngRange = maxLng - minLng
 
   const getTop = (lat: number) => {
-    const p = ((maxLat - lat) / (maxLat - minLat)) * 100
-    return `${Math.max(5, Math.min(95, p))}%`
+    const p = ((maxLat - lat) / latRange) * 100
+    return `${Math.max(2, Math.min(98, p))}%`
   }
 
   const getLeft = (lng: number) => {
-    const p = ((lng - minLng) / (maxLng - minLng)) * 100
-    return `${Math.max(5, Math.min(95, p))}%`
+    const p = ((lng - minLng) / lngRange) * 100
+    return `${Math.max(2, Math.min(98, p))}%`
   }
 
   return (
     <div
-      className="animate-fade-in relative h-full w-full overflow-hidden bg-[#e5e3df]"
+      className="animate-fade-in relative h-full w-full overflow-hidden bg-[#eef0f2]"
       onClick={() => setSelectedPlace(null)}
     >
-      <div className="absolute top-4 left-1/2 -translate-x-1/2 z-50 flex flex-col sm:flex-row gap-3 bg-white/90 backdrop-blur-md p-3 rounded-2xl shadow-xl border border-white/50 w-[90%] max-w-md">
+      <div
+        className="pointer-events-none absolute inset-0 opacity-[0.03]"
+        style={{
+          backgroundImage: 'radial-gradient(#000 1px, transparent 1px)',
+          backgroundSize: '20px 20px',
+        }}
+      ></div>
+
+      <div className="absolute left-1/2 top-4 z-50 flex w-[90%] max-w-md -translate-x-1/2 flex-col gap-3 rounded-2xl border border-white/50 bg-white/90 p-3 shadow-xl backdrop-blur-md sm:flex-row">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
           <SelectTrigger className="bg-white">
             <div className="flex items-center gap-2">
@@ -71,19 +83,16 @@ export default function MapView() {
           </SelectContent>
         </Select>
 
-        <div className="flex items-center justify-between sm:justify-start gap-3 bg-white px-4 py-2 rounded-xl border sm:w-auto h-10">
-          <Label htmlFor="map-open-now" className="cursor-pointer font-bold text-slate-700 text-sm">
+        <div className="flex h-10 items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2 sm:w-auto sm:justify-start">
+          <Label
+            htmlFor="map-open-now"
+            className="cursor-pointer whitespace-nowrap text-sm font-bold text-slate-700"
+          >
             Aberto Agora
           </Label>
           <Switch id="map-open-now" checked={openNow} onCheckedChange={setOpenNow} />
         </div>
       </div>
-
-      <img
-        src="https://img.usecurling.com/p/1200/800?q=map&color=gray"
-        alt="Map background"
-        className="absolute inset-0 h-full w-full object-cover opacity-30 mix-blend-multiply"
-      />
 
       {filteredPlaces.map((place) => {
         const isOpen = isPlaceOpen(place.operatingHours)
@@ -99,16 +108,16 @@ export default function MapView() {
         return (
           <div
             key={place.id}
-            className="absolute z-20 -translate-x-1/2 -translate-y-1/2"
+            className="absolute z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
             style={{ top: getTop(place.coordinates.lat), left: getLeft(place.coordinates.lng) }}
             onClick={(e) => e.stopPropagation()}
           >
             <button
               onClick={() => setSelectedPlace(place.id)}
               className={cn(
-                'flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-lg transition-transform',
+                'flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-lg transition-all duration-300',
                 selectedPlace === place.id
-                  ? 'scale-125 z-30 ring-4 ring-primary/30'
+                  ? 'z-30 scale-125 ring-4 ring-primary/30'
                   : 'hover:scale-110',
                 markerColor,
               )}
@@ -117,12 +126,19 @@ export default function MapView() {
             </button>
 
             {selectedPlace === place.id && (
-              <div className="absolute bottom-full left-1/2 mb-3 w-48 -translate-x-1/2 animate-in fade-in slide-in-from-bottom-2 z-40 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-2xl">
+              <div className="animate-in fade-in slide-in-from-bottom-2 absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-2xl">
                 <div className="p-3 text-center">
-                  <h3 className="mb-1 font-bold leading-tight text-slate-900">{place.name}</h3>
-                  <span className="mb-3 inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
-                    {place.category}
-                  </span>
+                  <h3 className="mb-1 truncate font-bold leading-tight text-slate-900">
+                    {place.name}
+                  </h3>
+                  <div className="mb-3 flex items-center justify-center gap-2">
+                    <span className="inline-block rounded-full bg-primary/10 px-2 py-0.5 text-[10px] font-bold uppercase tracking-wider text-primary">
+                      {place.category}
+                    </span>
+                    <span className="text-xs font-medium text-slate-500">
+                      {isOpen ? 'Aberto' : 'Fechado'}
+                    </span>
+                  </div>
                   <Link
                     to={`/place/${place.id}`}
                     className="flex w-full items-center justify-center rounded-lg bg-secondary py-2 text-sm font-semibold text-secondary-foreground transition-colors hover:bg-secondary/90"
@@ -139,13 +155,15 @@ export default function MapView() {
 
       {location && (
         <div
-          className="absolute z-30 -translate-x-1/2 -translate-y-1/2 pointer-events-none"
+          className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2 transition-all duration-500"
           style={{ top: getTop(location.lat), left: getLeft(location.lng) }}
         >
           <div className="relative flex flex-col items-center">
             <div className="flex h-12 w-12 items-center justify-center">
               <span className="absolute inline-flex h-8 w-8 animate-ping rounded-full bg-blue-400 opacity-75"></span>
-              <span className="relative inline-flex h-5 w-5 rounded-full border-2 border-white bg-blue-500 shadow-md"></span>
+              <span className="relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-500 shadow-md">
+                <Navigation className="h-3 w-3 rotate-45 fill-white text-white" />
+              </span>
             </div>
             <div className="absolute top-full mt-1 whitespace-nowrap rounded-full bg-slate-900 px-3 py-1 text-[11px] font-bold text-white shadow-md">
               Sua localização
