@@ -82,21 +82,27 @@ export default function PlaceDetails() {
   const isFlashOfferActive = place.flashOffer && place.flashOffer.expiresAt > Date.now()
 
   const handleShare = async () => {
+    const url = window.location.href
+
     if (navigator.share) {
       try {
-        await navigator.share({ title: place.name, url: window.location.href })
-      } catch (error) {
+        await navigator.share({ title: place.name, url })
+        return
+      } catch (error: any) {
         console.error('Error sharing:', error)
+        if (error.name === 'AbortError') {
+          return
+        }
       }
-    } else {
-      try {
-        await navigator.clipboard.writeText(window.location.href)
-        toast.success('Link copiado', {
-          description: 'O link do local foi copiado para sua área de transferência.',
-        })
-      } catch (err) {
-        console.error('Failed to copy', err)
-      }
+    }
+
+    try {
+      await navigator.clipboard.writeText(url)
+      toast.success('Link copiado!', {
+        description: 'O link do local foi copiado para sua área de transferência.',
+      })
+    } catch (err) {
+      console.error('Failed to copy', err)
     }
   }
 
