@@ -14,6 +14,7 @@ import { Place, createDefaultHours } from '@/data/places'
 import { AdminHoursForm } from './AdminHoursForm'
 import { AdminTourFields } from './AdminTourFields'
 import { AdminImageFields } from './AdminImageFields'
+import { AdminPlaceReviews } from './AdminPlaceReviews'
 import { Download, Link as LinkIcon, MapPin, Search } from 'lucide-react'
 import { toast } from 'sonner'
 import { parseImportUrl } from '@/lib/importUrl'
@@ -355,6 +356,8 @@ export function AdminPlaceForm({ initialData, onSave, onCancel, isCompanyView }:
           handleChange('galleryImages', newGal)
         }}
       />
+
+      {!isCompanyView && initialData?.id && <AdminPlaceReviews placeId={initialData.id} />}
 
       <div className="flex justify-end gap-3 pt-6 border-t">
         {onCancel && (

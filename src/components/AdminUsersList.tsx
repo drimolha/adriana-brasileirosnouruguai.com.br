@@ -27,12 +27,11 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { usePlaces } from '@/context/PlacesContext'
 import { toast } from 'sonner'
+import { PlaceSearchCombobox } from './PlaceSearchCombobox'
 
 export function AdminUsersList() {
   const [users, setUsers] = useState<any[]>([])
-  const { places } = usePlaces()
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingUser, setEditingUser] = useState<any>(null)
@@ -201,21 +200,10 @@ export function AdminUsersList() {
               <>
                 <div className="space-y-2">
                   <Label>Estabelecimento Vinculado</Label>
-                  <Select
+                  <PlaceSearchCombobox
                     value={formData.managedPlaceId || ''}
-                    onValueChange={(v) => setFormData({ ...formData, managedPlaceId: v })}
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione o local..." />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {places.map((p) => (
-                        <SelectItem key={p.id} value={p.id}>
-                          {p.name}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
+                    onChange={(v) => setFormData({ ...formData, managedPlaceId: v })}
+                  />
                 </div>
                 <div className="grid grid-cols-2 gap-4">
                   <div className="space-y-2">
