@@ -1,4 +1,4 @@
-import { MapPin, Filter, Navigation, Plus, Minus, Search, LocateFixed } from 'lucide-react'
+import { MapPin, Filter, Navigation, Plus, Minus, LocateFixed } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect, useLayoutEffect } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
 import { useGeo } from '@/context/GeoContext'
@@ -445,7 +445,7 @@ export default function MapView() {
                       to={`/place/${selectedPlaceData.id}`}
                       className="flex w-full items-center justify-center rounded-xl bg-secondary py-2.5 text-sm font-bold text-secondary-foreground shadow-sm transition-transform hover:scale-[1.02] active:scale-[0.98]"
                     >
-                      Ver Detalhes
+                      Acessar informações
                     </Link>
                   </div>
                   <div className="absolute left-1/2 top-full -mt-[1px] -translate-x-1/2 border-[8px] border-transparent border-t-white"></div>

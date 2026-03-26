@@ -18,6 +18,7 @@ import Admin from '@/pages/Admin'
 import EstablishmentAdmin from '@/pages/EstablishmentAdmin'
 import NotFound from '@/pages/NotFound'
 import Profile from '@/pages/Profile'
+import UserProfile from '@/pages/UserProfile'
 import Auth from '@/pages/Auth'
 import TopRestaurants from '@/pages/TopRestaurants'
 
@@ -39,6 +40,7 @@ const App = () => (
                     <Route path="/favorites" element={<Favorites />} />
                     <Route path="/map" element={<MapView />} />
                     <Route path="/profile" element={<Profile />} />
+                    <Route path="/perfil" element={<UserProfile />} />
                     <Route path="/auth" element={<Auth />} />
                     <Route path="/admin" element={<Admin />} />
                     <Route path="/empresa" element={<EstablishmentAdmin />} />
