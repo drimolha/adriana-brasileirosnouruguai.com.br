@@ -2,6 +2,7 @@ import { MapPin, Filter, Navigation, Plus, Minus } from 'lucide-react'
 import { useState, useMemo, useRef, useEffect } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
 import { useGeo } from '@/context/GeoContext'
+import { useAccess } from '@/context/AccessContext'
 import { Link } from 'react-router-dom'
 import { isPlaceOpen, cn } from '@/lib/utils'
 import {
@@ -35,6 +36,7 @@ function pxToLatLng(x: number, y: number, z: number) {
 export default function MapView() {
   const { places, categories } = usePlaces()
   const { location } = useGeo()
+  const { getPlaceStatus } = useAccess()
   const [selectedPlace, setSelectedPlace] = useState<string | null>(null)
 
   const [categoryFilter, setCategoryFilter] = useState('Todas')
@@ -168,38 +170,45 @@ export default function MapView() {
         ))}
       </div>
 
-      <div className="no-drag absolute left-1/2 top-4 z-50 flex w-[90%] max-w-md -translate-x-1/2 flex-col gap-3 rounded-2xl border border-white/50 bg-white/90 p-3 shadow-xl backdrop-blur-md sm:flex-row cursor-auto">
-        <Select value={categoryFilter} onValueChange={setCategoryFilter}>
-          <SelectTrigger className="bg-white">
-            <div className="flex items-center gap-2">
-              <Filter className="h-4 w-4 text-muted-foreground" />
-              <SelectValue placeholder="Categoria" />
-            </div>
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="Todas">Todas as Categorias</SelectItem>
-            {categories
-              .filter((c) => c.toLowerCase() !== 'passeios')
-              .map((c) => (
-                <SelectItem key={c} value={c}>
-                  {c}
-                </SelectItem>
-              ))}
-          </SelectContent>
-        </Select>
+      <div className="no-drag absolute left-1/2 top-4 z-40 flex w-[90%] max-w-sm -translate-x-1/2 flex-row gap-2 rounded-xl border border-white/50 bg-white/95 p-2 shadow-lg backdrop-blur-md items-center justify-between cursor-auto">
+        <div className="w-[140px] sm:w-[180px]">
+          <Select value={categoryFilter} onValueChange={setCategoryFilter}>
+            <SelectTrigger className="h-8 bg-white text-xs">
+              <div className="flex items-center gap-1.5">
+                <Filter className="h-3 w-3 text-muted-foreground" />
+                <SelectValue placeholder="Categoria" />
+              </div>
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="Todas">Todas as Categorias</SelectItem>
+              {categories
+                .filter((c) => c.toLowerCase() !== 'passeios')
+                .map((c) => (
+                  <SelectItem key={c} value={c}>
+                    {c}
+                  </SelectItem>
+                ))}
+            </SelectContent>
+          </Select>
+        </div>
 
-        <div className="flex h-10 items-center justify-between gap-3 rounded-xl border bg-white px-4 py-2 sm:w-auto sm:justify-start">
+        <div className="flex h-8 items-center gap-2 rounded-lg bg-white px-3 border border-slate-100">
           <Label
             htmlFor="map-open-now"
-            className="cursor-pointer whitespace-nowrap text-sm font-bold text-slate-700"
+            className="cursor-pointer whitespace-nowrap text-[11px] font-bold text-slate-700"
           >
-            Aberto Agora
+            Aberto
           </Label>
-          <Switch id="map-open-now" checked={openNow} onCheckedChange={setOpenNow} />
+          <Switch
+            id="map-open-now"
+            className="scale-75 origin-right"
+            checked={openNow}
+            onCheckedChange={setOpenNow}
+          />
         </div>
       </div>
 
-      <div className="no-drag absolute right-4 bottom-24 z-50 flex flex-col gap-2">
+      <div className="no-drag absolute right-4 bottom-24 z-40 flex flex-col gap-2">
         <button
           onClick={() => setZoom((z) => Math.min(z + 1, 19))}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-700 shadow-md border border-slate-200 hover:bg-slate-50 transition-colors"
@@ -214,20 +223,6 @@ export default function MapView() {
         </button>
       </div>
 
-      <div className="no-drag absolute bottom-24 left-4 z-50 rounded-xl bg-white/90 p-3 shadow-md backdrop-blur-md text-xs border border-slate-200 cursor-auto">
-        <p className="font-bold text-slate-800 mb-2 uppercase tracking-widest text-[10px]">
-          Legenda
-        </p>
-        <div className="flex items-center gap-2 mb-1.5">
-          <div className="w-3.5 h-3.5 rounded-full bg-[#FFD700] border border-[#E6C200]"></div>
-          <span className="text-slate-600 font-medium">Destaques</span>
-        </div>
-        <div className="flex items-center gap-2">
-          <div className="w-3.5 h-3.5 rounded-full bg-[#003399] border border-[#002266]"></div>
-          <span className="text-slate-600 font-medium">Locais</span>
-        </div>
-      </div>
-
       <div className="absolute inset-0 pointer-events-none overflow-hidden">
         {filteredPlaces.map((place) => {
           const markerPx = latLngToPx(place.coordinates.lat, place.coordinates.lng, mapZoom)
@@ -236,16 +231,25 @@ export default function MapView() {
 
           if (left < -50 || left > dims.w + 50 || top < -50 || top > dims.h + 50) return null
 
-          const isFeatured = place.featured
-          const markerColor = isFeatured
-            ? 'bg-[#FFD700] border-[#E6C200] text-black'
-            : 'bg-[#003399] border-[#002266] text-white'
-          const iconColor = isFeatured ? 'fill-black/20 text-black' : 'fill-white/20 text-white'
+          const status = getPlaceStatus(place.id)
+          let markerColor = 'bg-[#003399] border-[#002266] text-white'
+          let iconColor = 'fill-white/20 text-white'
+
+          if (status === 'active') {
+            markerColor = 'bg-[#FFD700] border-[#E6C200] text-black'
+            iconColor = 'fill-black/20 text-black'
+          } else if (status === 'expired') {
+            markerColor = 'bg-slate-400 border-slate-500 text-white'
+            iconColor = 'fill-white/20 text-white'
+          }
 
           return (
             <div
               key={place.id}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+              className={cn(
+                'absolute -translate-x-1/2 -translate-y-1/2 pointer-events-auto transition-all',
+                selectedPlace === place.id ? 'z-50' : 'z-20',
+              )}
               style={{ top, left }}
               onClick={(e) => e.stopPropagation()}
             >
@@ -254,7 +258,7 @@ export default function MapView() {
                 className={cn(
                   'no-drag flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-lg transition-transform duration-200',
                   selectedPlace === place.id
-                    ? 'z-30 scale-125 ring-4 ring-primary/30'
+                    ? 'scale-125 ring-4 ring-primary/30'
                     : 'hover:scale-110',
                   markerColor,
                 )}
@@ -269,7 +273,7 @@ export default function MapView() {
               )}
 
               {selectedPlace === place.id && (
-                <div className="no-drag animate-in fade-in slide-in-from-bottom-2 absolute bottom-full left-1/2 z-40 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-2xl cursor-auto">
+                <div className="no-drag animate-in fade-in slide-in-from-bottom-2 absolute bottom-full left-1/2 mb-3 w-56 -translate-x-1/2 overflow-hidden rounded-xl border border-slate-100 bg-white shadow-2xl cursor-auto">
                   <div className="p-3 text-center">
                     <h3 className="mb-1 truncate font-bold leading-tight text-slate-900">
                       {place.name}
