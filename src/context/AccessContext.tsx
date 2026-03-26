@@ -1,5 +1,6 @@
 import React, { createContext, useContext, useEffect, useState } from 'react'
 import { toast } from 'sonner'
+import { useAuth } from './AuthContext'
 
 export interface AccessRecord {
   placeId: string
@@ -11,11 +12,17 @@ interface AccessContextType {
   accesses: AccessRecord[]
   checkIn: (placeId: string) => void
   getPlaceStatus: (placeId: string) => 'active' | 'expired' | 'none'
+  getPlaceCheckIn: (placeId: string) => number | null
+  recordCheckIn: (placeId: string) => void
+  isExpired: boolean
+  isGranted: boolean
 }
 
 const AccessContext = createContext<AccessContextType | undefined>(undefined)
 
 export function AccessProvider({ children }: { children: React.ReactNode }) {
+  const { currentUser } = useAuth()
+
   const [accesses, setAccesses] = useState<AccessRecord[]>(() => {
     try {
       const saved = localStorage.getItem('@uruguai:accesses')
@@ -59,9 +66,31 @@ export function AccessProvider({ children }: { children: React.ReactNode }) {
     return Date.now() > record.expiresAt ? 'expired' : 'active'
   }
 
+  const getPlaceCheckIn = (placeId: string): number | null => {
+    const record = accesses.find((a) => a.placeId === placeId)
+    return record ? record.timestamp : null
+  }
+
+  const recordCheckIn = (placeId: string) => {
+    checkIn(placeId)
+  }
+
+  const isExpired = false
+  const isGranted = currentUser?.role === 'establishment'
+
   return React.createElement(
     AccessContext.Provider,
-    { value: { accesses, checkIn, getPlaceStatus } },
+    {
+      value: {
+        accesses,
+        checkIn,
+        getPlaceStatus,
+        getPlaceCheckIn,
+        recordCheckIn,
+        isExpired,
+        isGranted,
+      },
+    },
     children,
   )
 }
