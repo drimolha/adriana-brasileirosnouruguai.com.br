@@ -20,15 +20,20 @@ export function PlaceCard({ place, activeCheckIn }: PlaceCardProps) {
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
+    // Check status immediately upon load to prevent caching
+    setNow(Date.now())
     const timer = setInterval(() => setNow(Date.now()), 60000)
     return () => clearInterval(timer)
   }, [])
 
   const favorite = isFavorite(place.id)
-  const dist = calculateDistance(place.coordinates.lat, place.coordinates.lng)
+
+  const hasCoords = place.coordinates?.lat != null && place.coordinates?.lng != null
+  const dist = hasCoords ? calculateDistance(place.coordinates.lat, place.coordinates.lng) : null
   const displayDistance = dist ? `${dist.toFixed(1)} km` : 'Calculando...'
+
   const isTour = place.type === 'tour'
-  const isOpen = !isTour && isPlaceOpen(place.operatingHours)
+  const isOpen = !isTour && isPlaceOpen(place.operatingHours, now)
   const isCompany = currentUser?.role === 'establishment'
 
   const handleFavoriteClick = (e: React.MouseEvent) => {
@@ -47,7 +52,7 @@ export function PlaceCard({ place, activeCheckIn }: PlaceCardProps) {
             className="h-full w-full object-cover transition-transform duration-500 group-hover:scale-105"
             loading="lazy"
           />
-          <div className="absolute left-3 top-3 flex flex-col gap-1.5 items-start">
+          <div className="absolute left-3 top-3 flex flex-col items-start gap-1.5">
             {activeCheckIn && (
               <Badge className="border-none bg-green-500 font-bold text-white shadow-md hover:bg-green-600">
                 Check-in Ativo

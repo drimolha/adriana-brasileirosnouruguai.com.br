@@ -26,9 +26,9 @@ export const DAYS_OF_WEEK = [
  * Use UTC methods (getUTCDay, getUTCHours, etc.) on the returned Date to get the correct SP time values.
  * This avoids any local timezone DST gaps or string parsing inconsistencies.
  */
-export function getSpDate(): Date {
-  const date = new Date()
-  const formatter = new Intl.DateTimeFormat('en-US', {
+export function getSpDate(timestamp?: number): Date {
+  const date = timestamp ? new Date(timestamp) : new Date()
+  const options: Intl.DateTimeFormatOptions = {
     timeZone: 'America/Sao_Paulo',
     year: 'numeric',
     month: 'numeric',
@@ -36,9 +36,10 @@ export function getSpDate(): Date {
     hour: 'numeric',
     minute: 'numeric',
     second: 'numeric',
-    hour12: false,
-  })
+    hourCycle: 'h23',
+  }
 
+  const formatter = new Intl.DateTimeFormat('en-US', options)
   const parts = formatter.formatToParts(date)
   const getPart = (type: string) => {
     const part = parts.find((p) => p.type === type)
@@ -48,18 +49,17 @@ export function getSpDate(): Date {
   const year = getPart('year')
   const month = getPart('month') - 1
   const day = getPart('day')
-  let hour = getPart('hour')
-  if (hour === 24) hour = 0
+  const hour = getPart('hour')
   const minute = getPart('minute')
   const second = getPart('second')
 
   return new Date(Date.UTC(year, month, day, hour, minute, second))
 }
 
-export function isPlaceOpen(operatingHours?: DailyHours[]): boolean {
+export function isPlaceOpen(operatingHours?: DailyHours[], timestamp?: number): boolean {
   if (!operatingHours || operatingHours.length === 0) return false
 
-  const spDate = getSpDate()
+  const spDate = getSpDate(timestamp)
   const currentDay = spDate.getUTCDay()
   const currentHour = spDate.getUTCHours()
   const currentMinute = spDate.getUTCMinutes()
@@ -72,7 +72,7 @@ export function isPlaceOpen(operatingHours?: DailyHours[]): boolean {
   // 1. Check if we are still within yesterday's shift that crossed midnight
   if (
     yesterdayHours?.isOpen &&
-    yesterdayHours.closeTime < yesterdayHours.openTime &&
+    yesterdayHours.closeTime <= yesterdayHours.openTime &&
     currentTimeStr < yesterdayHours.closeTime
   ) {
     return true
@@ -80,7 +80,7 @@ export function isPlaceOpen(operatingHours?: DailyHours[]): boolean {
 
   // 2. Check today's shift
   if (todayHours?.isOpen) {
-    if (todayHours.closeTime < todayHours.openTime) {
+    if (todayHours.closeTime <= todayHours.openTime) {
       // Shift crosses midnight into tomorrow. We are open if we are past today's open time.
       if (currentTimeStr >= todayHours.openTime) {
         return true

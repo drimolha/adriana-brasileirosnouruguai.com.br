@@ -52,6 +52,8 @@ export default function PlaceDetails() {
   const hasTrackedAccess = useRef(false)
 
   useEffect(() => {
+    // Force immediate sync to get fresh Date status
+    setNow(Date.now())
     const timer = setInterval(() => setNow(Date.now()), 60000)
     return () => clearInterval(timer)
   }, [])
@@ -81,11 +83,12 @@ export default function PlaceDetails() {
 
   const isTour = place.type === 'tour'
   const favorite = isFavorite(place.id)
-  const dist = calculateDistance(place.coordinates.lat, place.coordinates.lng)
+  const hasCoords = place.coordinates?.lat != null && place.coordinates?.lng != null
+  const dist = hasCoords ? calculateDistance(place.coordinates.lat, place.coordinates.lng) : null
   const displayDistance = dist ? `${dist.toFixed(1)} km` : 'Calculando...'
   const checkInTime = getPlaceCheckIn(place.id)
-  const isOpen = !isTour && isPlaceOpen(place.operatingHours)
-  const isFlashOfferActive = place.flashOffer && place.flashOffer.expiresAt > Date.now()
+  const isOpen = !isTour && isPlaceOpen(place.operatingHours, now)
+  const isFlashOfferActive = place.flashOffer && place.flashOffer.expiresAt > now
 
   const handleShare = async () => {
     const url = window.location.href
@@ -109,6 +112,9 @@ export default function PlaceDetails() {
       })
     } catch (err) {
       console.error('Failed to copy', err)
+      toast.error('Erro ao copiar link', {
+        description: 'Não foi possível copiar o link. Tente manualmente.',
+      })
     }
   }
 
@@ -184,7 +190,7 @@ END:VCALENDAR`
         <ArrowLeft className="h-5 w-5" />
       </button>
 
-      <div className="hide-scrollbar flex-1 overflow-y-auto lg:border-r bg-slate-50">
+      <div className="hide-scrollbar flex-1 overflow-y-auto bg-slate-50 lg:border-r">
         <div className="relative bg-slate-900 lg:hidden">
           <Carousel opts={{ loop: true }} className="w-full">
             <CarouselContent>
@@ -211,12 +217,12 @@ END:VCALENDAR`
           </Carousel>
         </div>
 
-        <div className="hidden lg:grid grid-cols-2 gap-1 bg-slate-900 p-1 shrink-0">
+        <div className="hidden shrink-0 grid-cols-2 gap-1 bg-slate-900 p-1 lg:grid">
           {place.galleryImages.slice(0, 2).map((img, index) => (
             <div
               key={index}
               className={cn(
-                'relative w-full overflow-hidden bg-slate-100 group',
+                'group relative w-full overflow-hidden bg-slate-100',
                 isTour ? 'aspect-[4/3]' : 'aspect-[4/3] xl:aspect-[3/2]',
               )}
             >
@@ -226,8 +232,8 @@ END:VCALENDAR`
                 className="absolute inset-0 h-full w-full object-cover transition-transform duration-700 group-hover:scale-105"
               />
               {index === 1 && place.galleryImages.length > 2 && (
-                <div className="absolute bottom-4 right-4 z-10 rounded-full bg-black/70 px-4 py-2 text-sm font-bold text-white shadow-md backdrop-blur-sm flex items-center gap-2 cursor-default border border-white/10">
-                  <span className="flex h-2 w-2 rounded-full bg-brand-yellow animate-pulse"></span>+
+                <div className="absolute bottom-4 right-4 z-10 flex cursor-default items-center gap-2 rounded-full border border-white/10 bg-black/70 px-4 py-2 text-sm font-bold text-white shadow-md backdrop-blur-sm">
+                  <span className="flex h-2 w-2 animate-pulse rounded-full bg-brand-yellow"></span>+
                   {place.galleryImages.length - 2} fotos
                 </div>
               )}
@@ -239,8 +245,8 @@ END:VCALENDAR`
           <div className="hidden p-8 lg:block">
             <h3 className="mb-4 font-display text-xl font-bold">Localização</h3>
             <PlaceMapSection
-              lat={place.coordinates.lat}
-              lng={place.coordinates.lng}
+              lat={place.coordinates?.lat}
+              lng={place.coordinates?.lng}
               address={place.address}
               distance={displayDistance}
             />
@@ -270,7 +276,7 @@ END:VCALENDAR`
                       Agende sua visita para {place.name}.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex flex-col gap-3 mt-4">
+                  <div className="mt-4 flex flex-col gap-3">
                     <Button onClick={() => handleAddToCalendar('google')} variant="outline">
                       Google Calendar
                     </Button>
@@ -310,7 +316,7 @@ END:VCALENDAR`
           <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-slate-900">
             {place.name}
           </h1>
-          <p className="mb-4 font-medium text-slate-500 text-lg">{place.city}</p>
+          <p className="mb-4 text-lg font-medium text-slate-500">{place.city}</p>
 
           <div className="mb-8 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 text-sm text-slate-600">
             {!isTour && (
@@ -347,7 +353,7 @@ END:VCALENDAR`
                   variant="outline"
                   size="sm"
                   asChild
-                  className="rounded-full gap-2 text-pink-600 hover:text-pink-700 hover:bg-pink-50 border-pink-200"
+                  className="gap-2 rounded-full border-pink-200 text-pink-600 hover:bg-pink-50 hover:text-pink-700"
                 >
                   <a href={place.instagramUrl} target="_blank" rel="noreferrer">
                     <Instagram className="h-4 w-4" /> Instagram
@@ -359,7 +365,7 @@ END:VCALENDAR`
                   variant="outline"
                   size="sm"
                   asChild
-                  className="rounded-full gap-2 text-blue-600 hover:text-blue-700 hover:bg-blue-50 border-blue-200"
+                  className="gap-2 rounded-full border-blue-200 text-blue-600 hover:bg-blue-50 hover:text-blue-700"
                 >
                   <a href={place.websiteUrl} target="_blank" rel="noreferrer">
                     <Globe className="h-4 w-4" /> Website
@@ -372,7 +378,7 @@ END:VCALENDAR`
           {!isTour &&
             !isCompany &&
             (isCheckInLoading ? (
-              <div className="mb-8 flex justify-center items-center py-8 rounded-3xl border border-slate-100 bg-slate-50 shadow-inner">
+              <div className="mb-8 flex items-center justify-center rounded-3xl border border-slate-100 bg-slate-50 py-8 shadow-inner">
                 <Loader2 className="h-6 w-6 animate-spin text-primary" />
                 <span className="ml-3 text-sm font-bold text-slate-500">
                   Verificando status do check-in...
@@ -383,18 +389,18 @@ END:VCALENDAR`
             ))}
 
           {isFlashOfferActive && (
-            <div className="mb-8 rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm relative overflow-hidden animate-in fade-in zoom-in duration-500">
-              <div className="absolute top-0 right-0 bg-red-500 text-white text-[10px] font-bold px-3 py-1 rounded-bl-xl uppercase tracking-wider flex items-center gap-1">
+            <div className="animate-in fade-in zoom-in relative mb-8 overflow-hidden rounded-2xl border border-red-200 bg-red-50 p-5 shadow-sm duration-500">
+              <div className="absolute right-0 top-0 flex items-center gap-1 rounded-bl-xl bg-red-500 px-3 py-1 text-[10px] font-bold uppercase tracking-wider text-white">
                 <Timer className="h-3 w-3" /> {place.flashOffer?.durationLabel}
               </div>
               <div className="mb-2 flex items-center gap-2 text-red-600">
                 <Zap className="h-6 w-6 fill-current drop-shadow-sm" />
                 <h3 className="font-display text-lg font-bold">Oferta Relâmpago!</h3>
               </div>
-              <p className="mb-3 text-4xl font-black text-red-600 tracking-tight">
+              <p className="mb-3 tracking-tight text-4xl font-black text-red-600">
                 {place.flashOffer?.percentage}% OFF
               </p>
-              <p className="text-sm font-medium leading-relaxed text-red-800 bg-white/50 p-3 rounded-xl border border-red-100">
+              <p className="rounded-xl border border-red-100 bg-white/50 p-3 text-sm font-medium leading-relaxed text-red-800">
                 {place.flashOffer?.description}
               </p>
             </div>
@@ -404,9 +410,9 @@ END:VCALENDAR`
             <div className="mb-8 rounded-2xl border border-primary/20 bg-primary/5 p-5">
               <div className="mb-3 flex items-center gap-2">
                 <Ticket className="h-5 w-5 text-primary" />
-                <h3 className="font-bold text-lg text-primary">Cupom de Desconto</h3>
+                <h3 className="text-lg font-bold text-primary">Cupom de Desconto</h3>
               </div>
-              <p className="mb-4 text-sm text-slate-700 font-medium leading-relaxed">
+              <p className="mb-4 text-sm font-medium leading-relaxed text-slate-700">
                 {place.discountDescription}
               </p>
               {place.couponCode && (
@@ -422,14 +428,14 @@ END:VCALENDAR`
               {isCompany ? (
                 <Button
                   disabled
-                  className="h-12 w-full font-bold text-base shadow-md opacity-50 cursor-not-allowed"
+                  className="h-12 w-full cursor-not-allowed text-base font-bold shadow-md opacity-50"
                 >
                   Resgate restrito para Conta Empresa
                 </Button>
               ) : (
                 <Button
                   asChild
-                  className="h-12 w-full font-bold text-base shadow-md"
+                  className="h-12 w-full text-base font-bold shadow-md"
                   onClick={handleCouponClick}
                 >
                   <a href={place.bookingUrl} target="_blank" rel="noreferrer">
@@ -461,13 +467,13 @@ END:VCALENDAR`
               <div className="space-y-2 rounded-xl border border-slate-100 bg-slate-50 p-4">
                 {DAYS_OF_WEEK.map((day) => {
                   const hours = place.operatingHours?.find((h) => h.day === day.value)
-                  const isToday = getSpDate().getUTCDay() === day.value
+                  const isToday = getSpDate(now).getUTCDay() === day.value
                   return (
                     <div
                       key={day.value}
                       className={cn(
                         'flex justify-between text-sm',
-                        isToday ? 'font-bold text-primary' : 'text-slate-600 font-medium',
+                        isToday ? 'font-bold text-primary' : 'font-medium text-slate-600',
                       )}
                     >
                       <span>{day.label}</span>
@@ -519,8 +525,8 @@ END:VCALENDAR`
             <div className="mb-8 lg:hidden">
               <h3 className="mb-3 font-display text-xl font-bold text-slate-900">Localização</h3>
               <PlaceMapSection
-                lat={place.coordinates.lat}
-                lng={place.coordinates.lng}
+                lat={place.coordinates?.lat}
+                lng={place.coordinates?.lng}
                 address={place.address}
                 distance={displayDistance}
               />
@@ -531,11 +537,11 @@ END:VCALENDAR`
         </div>
 
         {!isTour && !checkInTime && !isCheckInLoading && (
-          <div className="fixed bottom-0 left-0 right-0 z-40 border-t bg-white p-4 pb-safe shadow-[0_-10px_15px_-3px_rgb(0,0,0,0.05)] lg:sticky lg:border-none lg:bg-transparent lg:px-8 lg:pb-8 lg:shadow-none">
+          <div className="pb-safe fixed bottom-0 left-0 right-0 z-40 border-t bg-white p-4 shadow-[0_-10px_15px_-3px_rgb(0,0,0,0.05)] lg:sticky lg:border-none lg:bg-transparent lg:px-8 lg:pb-8 lg:shadow-none">
             {isCompany ? (
               <Button
                 disabled
-                className="h-14 w-full rounded-2xl text-lg font-bold shadow-xl opacity-50 cursor-not-allowed"
+                className="h-14 w-full cursor-not-allowed rounded-2xl text-lg font-bold shadow-xl opacity-50"
               >
                 Check-in restrito para Conta Empresa
               </Button>
@@ -551,12 +557,12 @@ END:VCALENDAR`
                 <DialogContent className="sm:max-w-md rounded-2xl">
                   <DialogHeader>
                     <DialogTitle className="font-display text-xl">Confirmar Check-in</DialogTitle>
-                    <DialogDescription className="text-base pt-2">
+                    <DialogDescription className="pt-2 text-base">
                       Atenção: O check-in adicionará este local ao seu histórico de progresso e
                       ativará seu desconto pelas próximas 24 horas. Certifique-se de estar no local.
                     </DialogDescription>
                   </DialogHeader>
-                  <div className="flex gap-3 pt-4 justify-end">
+                  <div className="mt-4 flex justify-end gap-3 pt-4">
                     <Button variant="outline" onClick={() => setShowCheckInDialog(false)}>
                       Cancelar
                     </Button>
