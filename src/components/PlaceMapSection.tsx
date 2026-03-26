@@ -1,12 +1,5 @@
 import { MapPin } from 'lucide-react'
 import { useState } from 'react'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogTrigger,
-} from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 
@@ -64,42 +57,20 @@ export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps
               Abrir no Maps
             </a>
           </Button>
-          <Dialog>
-            <DialogTrigger asChild>
-              <Button
-                variant="default"
-                size="sm"
-                className="flex-1 sm:flex-none rounded-xl bg-secondary font-semibold text-secondary-foreground shadow-sm hover:bg-secondary/90"
-              >
-                Como chegar
-              </Button>
-            </DialogTrigger>
-            <DialogContent className="sm:max-w-xs">
-              <DialogHeader>
-                <DialogTitle className="font-display text-center">Abrir navegação com</DialogTitle>
-              </DialogHeader>
-              <div className="mt-4 flex flex-col gap-3">
-                <Button asChild className="h-12 text-lg font-medium">
-                  <a
-                    href={`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Waze
-                  </a>
-                </Button>
-                <Button asChild className="h-12 text-lg font-medium">
-                  <a
-                    href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
-                    target="_blank"
-                    rel="noopener noreferrer"
-                  >
-                    Google Maps
-                  </a>
-                </Button>
-              </div>
-            </DialogContent>
-          </Dialog>
+          <Button
+            asChild
+            variant="default"
+            size="sm"
+            className="flex-1 sm:flex-none rounded-xl bg-secondary font-semibold text-secondary-foreground shadow-sm hover:bg-secondary/90"
+          >
+            <a
+              href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
+              target="_blank"
+              rel="noopener noreferrer"
+            >
+              Como chegar
+            </a>
+          </Button>
         </div>
       </div>
     </div>

@@ -36,12 +36,7 @@ export default function Index() {
 
     if (searchQuery.trim().length >= 3) {
       const query = searchQuery.toLowerCase()
-      result = result.filter(
-        (p) =>
-          p.name.toLowerCase().includes(query) ||
-          p.city.toLowerCase().includes(query) ||
-          p.category.toLowerCase().includes(query),
-      )
+      result = result.filter((p) => p.name.toLowerCase().includes(query))
     }
 
     if (selectedCity !== 'Todas') result = result.filter((p) => p.city === selectedCity)
@@ -158,7 +153,7 @@ export default function Index() {
         <div className="relative w-full">
           <Search className="absolute left-4 top-1/2 h-5 w-5 -translate-y-1/2 text-slate-400" />
           <Input
-            placeholder="Buscar estabelecimentos..."
+            placeholder="Buscar estabelecimento por nome..."
             value={searchQuery}
             onChange={(e) => setSearchQuery(e.target.value)}
             className="pl-11 h-12 w-full rounded-2xl border-slate-200 bg-white shadow-sm focus-visible:ring-primary/20 text-base"
