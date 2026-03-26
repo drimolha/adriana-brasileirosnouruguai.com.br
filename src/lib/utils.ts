@@ -36,7 +36,7 @@ export function getSpDate(timestamp?: number): Date {
     hour: 'numeric',
     minute: 'numeric',
     second: 'numeric',
-    hourCycle: 'h23',
+    hour12: false, // Ensures 24h format consistently
   }
 
   const formatter = new Intl.DateTimeFormat('en-US', options)
@@ -49,7 +49,9 @@ export function getSpDate(timestamp?: number): Date {
   const year = getPart('year')
   const month = getPart('month') - 1
   const day = getPart('day')
-  const hour = getPart('hour')
+  let hour = getPart('hour')
+  // Safely handle environments where hour12: false might still return 24 instead of 0
+  if (hour === 24) hour = 0
   const minute = getPart('minute')
   const second = getPart('second')
 

@@ -52,11 +52,11 @@ export default function PlaceDetails() {
   const hasTrackedAccess = useRef(false)
 
   useEffect(() => {
-    // Force immediate sync to get fresh Date status
+    // Force immediate sync to get fresh Date status on mount and place change
     setNow(Date.now())
-    const timer = setInterval(() => setNow(Date.now()), 60000)
+    const timer = setInterval(() => setNow(Date.now()), 10000)
     return () => clearInterval(timer)
-  }, [])
+  }, [id])
 
   const place = places.find((p) => p.id === id)
   const isCompany = currentUser?.role === 'establishment'
@@ -330,7 +330,7 @@ END:VCALENDAR`
                     isOpen ? 'text-secondary' : 'text-red-500',
                   )}
                 >
-                  <Clock className="h-4 w-4" /> {isOpen ? 'Aberto agora' : 'Fechado'}
+                  <Clock className="h-4 w-4" /> {isOpen ? 'Aberto' : 'Fechado'}
                 </div>
               </>
             )}

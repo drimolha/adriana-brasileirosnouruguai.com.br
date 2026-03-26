@@ -20,9 +20,9 @@ export function PlaceCard({ place, activeCheckIn }: PlaceCardProps) {
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
-    // Check status immediately upon load to prevent caching
+    // Check status immediately upon load to prevent caching and sync consistently
     setNow(Date.now())
-    const timer = setInterval(() => setNow(Date.now()), 60000)
+    const timer = setInterval(() => setNow(Date.now()), 10000)
     return () => clearInterval(timer)
   }, [])
 
@@ -70,7 +70,7 @@ export function PlaceCard({ place, activeCheckIn }: PlaceCardProps) {
                     : 'bg-slate-600 text-white hover:bg-slate-700',
                 )}
               >
-                {isOpen ? 'Aberto Agora' : 'Fechado'}
+                {isOpen ? 'Aberto' : 'Fechado'}
               </Badge>
             )}
           </div>
