@@ -37,7 +37,7 @@ export default function EstablishmentAdmin() {
     e.preventDefault()
     if (!selectedPlaceId || !password) return
     loginEstablishment(selectedPlaceId, password)
-    navigate('/profile')
+    navigate(`/place/${selectedPlaceId}`)
   }
 
   const selectedPlace = places.find((p) => p.id === selectedPlaceId)

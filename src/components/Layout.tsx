@@ -1,4 +1,4 @@
-import { Link, Outlet, useLocation } from 'react-router-dom'
+import { Link, Outlet, useLocation, useNavigate } from 'react-router-dom'
 import {
   Compass,
   Heart,
@@ -9,6 +9,7 @@ import {
   Trophy,
   Store,
   ShieldAlert,
+  LogOut,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -28,8 +29,14 @@ import { toast } from 'sonner'
 
 export function Layout() {
   const location = useLocation()
+  const navigate = useNavigate()
   const { isExpired, isGranted } = useAccess()
-  const { currentUser } = useAuth()
+  const { currentUser, logout } = useAuth()
+
+  const handleLogout = () => {
+    logout()
+    navigate('/')
+  }
 
   useEffect(() => {
     const handleOffline = () => {
@@ -136,6 +143,17 @@ export function Layout() {
                 </Button>
               )
             })}
+            {currentUser && (
+              <Button
+                variant="ghost"
+                size="sm"
+                onClick={handleLogout}
+                className="flex items-center gap-2 rounded-full px-4 transition-all duration-300 hover:bg-red-50 hover:text-red-500 text-muted-foreground"
+              >
+                <LogOut className="h-4 w-4" />
+                <span>Sair</span>
+              </Button>
+            )}
           </nav>
 
           {/* Mobile Nav */}
@@ -193,6 +211,18 @@ export function Layout() {
                         </SheetTrigger>
                       )
                     })}
+                    {currentUser && (
+                      <SheetTrigger asChild>
+                        <Button
+                          variant="ghost"
+                          onClick={handleLogout}
+                          className="w-full justify-start gap-3 rounded-xl h-12 transition-all hover:bg-red-50 hover:text-red-500 text-muted-foreground"
+                        >
+                          <LogOut className="h-5 w-5" />
+                          <span className="font-medium text-base">Sair</span>
+                        </Button>
+                      </SheetTrigger>
+                    )}
                   </nav>
                 </div>
               </SheetContent>

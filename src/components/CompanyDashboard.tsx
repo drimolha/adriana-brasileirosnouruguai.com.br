@@ -1,21 +1,32 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/context/AuthContext'
 import { usePlaces } from '@/context/PlacesContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Textarea } from '@/components/ui/textarea'
+import { Card, CardContent } from '@/components/ui/card'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { AdminImageFields } from './AdminImageFields'
+import { Place } from '@/data/places'
 import { toast } from 'sonner'
-import { Eye, MousePointerClick, CheckCircle2, ShieldCheck } from 'lucide-react'
+import { Eye, MousePointerClick, CheckCircle2, ShieldCheck, Pencil } from 'lucide-react'
 
 export function CompanyDashboard() {
   const { currentUser, logout } = useAuth()
-  const { places } = usePlaces()
+  const { places, updatePlace } = usePlaces()
   const [currentPwd, setCurrentPwd] = useState('')
   const [newPwd, setNewPwd] = useState('')
   const [confirmPwd, setConfirmPwd] = useState('')
 
   const managedPlace = places.find((p) => p.id === currentUser?.managedPlaceId)
+  const [formData, setFormData] = useState<Partial<Place>>({})
+
+  useEffect(() => {
+    if (managedPlace) {
+      setFormData(managedPlace)
+    }
+  }, [managedPlace])
 
   const handlePasswordChange = (e: React.FormEvent) => {
     e.preventDefault()
@@ -34,6 +45,14 @@ export function CompanyDashboard() {
       setNewPwd('')
       setConfirmPwd('')
     }, 800)
+  }
+
+  const handleSaveProfile = (e: React.FormEvent) => {
+    e.preventDefault()
+    if (managedPlace && formData) {
+      updatePlace(managedPlace.id, formData)
+      toast.success('Perfil atualizado com sucesso!')
+    }
   }
 
   if (!managedPlace) {
@@ -62,102 +81,179 @@ export function CompanyDashboard() {
         </Button>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="bg-primary/5 border-primary/20 shadow-none">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
-              <Eye className="h-6 w-6 text-primary" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Visualizações do Perfil
-              </p>
-              <p className="text-3xl font-black text-primary">{managedPlace.accessCount || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-secondary/5 border-secondary/20 shadow-none">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center">
-              <CheckCircle2 className="h-6 w-6 text-secondary" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Check-ins Realizados
-              </p>
-              <p className="text-3xl font-black text-secondary">{managedPlace.checkInCount || 0}</p>
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="bg-brand-yellow/10 border-brand-yellow/30 shadow-none">
-          <CardContent className="p-6 flex items-center gap-4">
-            <div className="h-12 w-12 rounded-full bg-brand-yellow/20 flex items-center justify-center">
-              <MousePointerClick className="h-6 w-6 text-brand-yellow drop-shadow-sm" />
-            </div>
-            <div>
-              <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
-                Cliques no Cupom
-              </p>
-              <p className="text-3xl font-black text-slate-900">
-                {managedPlace.couponClickCount || 0}
-              </p>
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+      <Tabs defaultValue="metrics" className="w-full">
+        <TabsList className="grid grid-cols-2 max-w-sm mb-6 bg-slate-100/50 p-1 rounded-xl h-12">
+          <TabsTrigger value="metrics" className="rounded-lg font-bold">
+            Métricas e Conta
+          </TabsTrigger>
+          <TabsTrigger value="edit" className="rounded-lg font-bold">
+            Editar Perfil
+          </TabsTrigger>
+        </TabsList>
 
-      <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm max-w-2xl">
-        <div className="flex items-center gap-3 mb-6">
-          <ShieldCheck className="h-6 w-6 text-slate-400" />
-          <h2 className="font-display text-xl font-bold text-slate-900">Segurança da Conta</h2>
-        </div>
-        <form onSubmit={handlePasswordChange} className="space-y-4">
-          <div className="space-y-2">
-            <Label htmlFor="current-pwd">Senha Atual</Label>
-            <Input
-              id="current-pwd"
-              type="password"
-              required
-              value={currentPwd}
-              onChange={(e) => setCurrentPwd(e.target.value)}
-              className="h-12 rounded-xl"
-              placeholder="Digite sua senha atual"
-            />
+        <TabsContent
+          value="metrics"
+          className="space-y-8 animate-in fade-in duration-500 outline-none"
+        >
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
+            <Card className="bg-primary/5 border-primary/20 shadow-none">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-primary/20 flex items-center justify-center">
+                  <Eye className="h-6 w-6 text-primary" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Visualizações
+                  </p>
+                  <p className="text-3xl font-black text-primary">
+                    {managedPlace.accessCount || 0}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-secondary/5 border-secondary/20 shadow-none">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-secondary/20 flex items-center justify-center">
+                  <CheckCircle2 className="h-6 w-6 text-secondary" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Check-ins Feitos
+                  </p>
+                  <p className="text-3xl font-black text-secondary">
+                    {managedPlace.checkInCount || 0}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-brand-yellow/10 border-brand-yellow/30 shadow-none">
+              <CardContent className="p-6 flex items-center gap-4">
+                <div className="h-12 w-12 rounded-full bg-brand-yellow/20 flex items-center justify-center">
+                  <MousePointerClick className="h-6 w-6 text-brand-yellow drop-shadow-sm" />
+                </div>
+                <div>
+                  <p className="text-xs font-bold text-muted-foreground uppercase tracking-wider">
+                    Cliques no Cupom
+                  </p>
+                  <p className="text-3xl font-black text-slate-900">
+                    {managedPlace.couponClickCount || 0}
+                  </p>
+                </div>
+              </CardContent>
+            </Card>
           </div>
-          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="new-pwd">Nova Senha</Label>
-              <Input
-                id="new-pwd"
-                type="password"
-                required
-                value={newPwd}
-                onChange={(e) => setNewPwd(e.target.value)}
-                className="h-12 rounded-xl"
-                placeholder="Mínimo 6 caracteres"
-              />
+
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm max-w-2xl">
+            <div className="flex items-center gap-3 mb-6">
+              <ShieldCheck className="h-6 w-6 text-slate-400" />
+              <h2 className="font-display text-xl font-bold text-slate-900">Segurança da Conta</h2>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="confirm-pwd">Confirmar Nova Senha</Label>
-              <Input
-                id="confirm-pwd"
-                type="password"
-                required
-                value={confirmPwd}
-                onChange={(e) => setConfirmPwd(e.target.value)}
-                className="h-12 rounded-xl"
-                placeholder="Repita a nova senha"
-              />
-            </div>
+            <form onSubmit={handlePasswordChange} className="space-y-4">
+              <div className="space-y-2">
+                <Label htmlFor="current-pwd">Senha Atual</Label>
+                <Input
+                  id="current-pwd"
+                  type="password"
+                  required
+                  value={currentPwd}
+                  onChange={(e) => setCurrentPwd(e.target.value)}
+                  className="h-12 rounded-xl"
+                  placeholder="Digite sua senha atual"
+                />
+              </div>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label htmlFor="new-pwd">Nova Senha</Label>
+                  <Input
+                    id="new-pwd"
+                    type="password"
+                    required
+                    value={newPwd}
+                    onChange={(e) => setNewPwd(e.target.value)}
+                    className="h-12 rounded-xl"
+                    placeholder="Mínimo 6 caracteres"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="confirm-pwd">Confirmar Nova Senha</Label>
+                  <Input
+                    id="confirm-pwd"
+                    type="password"
+                    required
+                    value={confirmPwd}
+                    onChange={(e) => setConfirmPwd(e.target.value)}
+                    className="h-12 rounded-xl"
+                    placeholder="Repita a nova senha"
+                  />
+                </div>
+              </div>
+              <Button
+                type="submit"
+                className="w-full sm:w-auto h-12 px-8 font-bold rounded-xl shadow-md mt-2"
+              >
+                Atualizar Senha
+              </Button>
+            </form>
           </div>
-          <Button
-            type="submit"
-            className="w-full sm:w-auto h-12 px-8 font-bold rounded-xl shadow-md mt-2"
-          >
-            Atualizar Senha
-          </Button>
-        </form>
-      </div>
+        </TabsContent>
+
+        <TabsContent value="edit" className="animate-in fade-in duration-500 outline-none">
+          <div className="bg-white rounded-3xl p-6 md:p-8 border border-slate-100 shadow-sm max-w-3xl">
+            <div className="flex items-center gap-3 mb-6">
+              <Pencil className="h-6 w-6 text-slate-400" />
+              <h2 className="font-display text-xl font-bold text-slate-900">
+                Editar Informações do Local
+              </h2>
+            </div>
+            <form onSubmit={handleSaveProfile} className="space-y-6">
+              <div className="space-y-2">
+                <Label>Descrição Curta</Label>
+                <Textarea
+                  value={formData.description || ''}
+                  onChange={(e) =>
+                    setFormData((prev) => ({ ...prev, description: e.target.value }))
+                  }
+                  placeholder="Descreva seu estabelecimento..."
+                  className="resize-none h-24"
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Endereço Completo</Label>
+                <Input
+                  value={formData.address || ''}
+                  onChange={(e) => setFormData((prev) => ({ ...prev, address: e.target.value }))}
+                  placeholder="Rua, Número, Bairro..."
+                  className="h-12 rounded-xl"
+                  required
+                />
+              </div>
+
+              <div className="pt-4 border-t border-slate-100">
+                <AdminImageFields
+                  coverImage={formData.coverImage || ''}
+                  galleryImages={formData.galleryImages || ['', '', '', '', '']}
+                  onChangeCover={(v) => setFormData((prev) => ({ ...prev, coverImage: v }))}
+                  onChangeGallery={(i, v) => {
+                    const newGal = [...(formData.galleryImages || ['', '', '', '', ''])]
+                    newGal[i] = v
+                    setFormData((prev) => ({ ...prev, galleryImages: newGal }))
+                  }}
+                />
+              </div>
+
+              <div className="pt-6">
+                <Button
+                  type="submit"
+                  className="w-full sm:w-auto h-12 px-8 font-bold rounded-xl shadow-md"
+                >
+                  Salvar Alterações
+                </Button>
+              </div>
+            </form>
+          </div>
+        </TabsContent>
+      </Tabs>
     </div>
   )
 }
