@@ -165,6 +165,12 @@ export default function Index() {
           />
         </div>
 
+        {searchQuery.trim().length > 0 && searchQuery.trim().length < 3 && (
+          <p className="text-xs font-medium text-slate-500 animate-fade-in px-2 -mt-2">
+            Digite pelo menos 3 caracteres para iniciar a busca.
+          </p>
+        )}
+
         <div className="hide-scrollbar -mx-4 flex overflow-x-auto px-4 md:mx-0 md:px-0">
           <div className="flex gap-2">
             {CATEGORIES.map((category) => (

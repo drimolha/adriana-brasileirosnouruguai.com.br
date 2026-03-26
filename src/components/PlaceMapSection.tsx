@@ -37,7 +37,7 @@ export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps
           loading="lazy"
           allowFullScreen
           referrerPolicy="no-referrer-when-downgrade"
-          src={`https://maps.google.com/maps?q=${lat},${lng}&t=m&z=16&output=embed&iwloc=near`}
+          src={`https://maps.google.com/maps?q=${lat},${lng}&hl=pt-BR&z=15&output=embed`}
           className={`absolute inset-0 h-full w-full transition-opacity duration-500 ${
             isLoading ? 'opacity-0' : 'opacity-100'
           }`}
@@ -59,7 +59,7 @@ export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps
             <a
               href={`https://www.google.com/maps/search/?api=1&query=${lat},${lng}`}
               target="_blank"
-              rel="noreferrer"
+              rel="noopener noreferrer"
             >
               Abrir no Maps
             </a>
@@ -83,7 +83,7 @@ export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps
                   <a
                     href={`https://waze.com/ul?ll=${lat},${lng}&navigate=yes`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
                     Waze
                   </a>
@@ -92,7 +92,7 @@ export function PlaceMapSection({ lat, lng, address, distance }: MapSectionProps
                   <a
                     href={`https://www.google.com/maps/dir/?api=1&destination=${lat},${lng}`}
                     target="_blank"
-                    rel="noreferrer"
+                    rel="noopener noreferrer"
                   >
                     Google Maps
                   </a>
