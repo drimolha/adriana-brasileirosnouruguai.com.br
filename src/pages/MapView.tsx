@@ -1,5 +1,5 @@
 import { MapPin, Filter, Navigation, Plus, Minus } from 'lucide-react'
-import { useState, useMemo, useRef } from 'react'
+import { useState, useMemo, useRef, useEffect } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
 import { useGeo } from '@/context/GeoContext'
 import { Link } from 'react-router-dom'
@@ -14,6 +14,24 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { Label } from '@/components/ui/label'
 
+const TILE_SIZE = 256
+
+function latLngToPx(lat: number, lng: number, z: number) {
+  const latRad = (lat * Math.PI) / 180
+  const n = Math.pow(2, z)
+  const x = ((lng + 180) / 360) * n * TILE_SIZE
+  const y = ((1 - Math.log(Math.tan(latRad) + 1 / Math.cos(latRad)) / Math.PI) / 2) * n * TILE_SIZE
+  return { x, y }
+}
+
+function pxToLatLng(x: number, y: number, z: number) {
+  const n = Math.pow(2, z)
+  const lng = (x / (TILE_SIZE * n)) * 360 - 180
+  const latRad = Math.atan(Math.sinh(Math.PI * (1 - (2 * y) / (TILE_SIZE * n))))
+  const lat = (latRad * 180) / Math.PI
+  return { lat, lng }
+}
+
 export default function MapView() {
   const { places, categories } = usePlaces()
   const { location } = useGeo()
@@ -24,39 +42,53 @@ export default function MapView() {
 
   const [centerLat, setCenterLat] = useState(-34.91)
   const [centerLng, setCenterLng] = useState(-56.151)
-  const [zoom, setZoom] = useState(1)
+  const [zoom, setZoom] = useState(14)
 
   const activePointers = useRef(new Map<number, { x: number; y: number }>())
-  const mapRef = useRef<HTMLDivElement>(null)
 
   const filteredPlaces = useMemo(() => {
     return places.filter((p) => {
-      // Hide tours/passeios from the map view
       if (p.type === 'tour' || p.category.toLowerCase() === 'passeios') return false
-
       if (categoryFilter !== 'Todas' && p.category !== categoryFilter) return false
       if (openNow && !isPlaceOpen(p.operatingHours)) return false
       return true
     })
   }, [places, categoryFilter, openNow])
 
-  const boundsMargin = 0.06 / zoom
-  const minLat = centerLat - boundsMargin
-  const maxLat = centerLat + boundsMargin
-  const minLng = centerLng - boundsMargin
-  const maxLng = centerLng + boundsMargin
+  const mapZoom = Math.floor(zoom)
+  const scale = Math.pow(2, zoom - mapZoom)
 
-  const latRange = maxLat - minLat
-  const lngRange = maxLng - minLng
+  const centerPx = latLngToPx(centerLat, centerLng, mapZoom)
 
-  const getTop = (lat: number) => {
-    const p = ((maxLat - lat) / latRange) * 100
-    return `${p}%`
-  }
+  const [dims, setDims] = useState({
+    w: typeof window !== 'undefined' ? window.innerWidth : 800,
+    h: typeof window !== 'undefined' ? window.innerHeight : 600,
+  })
 
-  const getLeft = (lng: number) => {
-    const p = ((lng - minLng) / lngRange) * 100
-    return `${p}%`
+  useEffect(() => {
+    const onResize = () => setDims({ w: window.innerWidth, h: window.innerHeight })
+    window.addEventListener('resize', onResize)
+    return () => window.removeEventListener('resize', onResize)
+  }, [])
+
+  const screenLeftPx = centerPx.x - dims.w / 2 / scale
+  const screenTopPx = centerPx.y - dims.h / 2 / scale
+
+  const startCol = Math.floor(screenLeftPx / TILE_SIZE)
+  const startRow = Math.floor(screenTopPx / TILE_SIZE)
+  const endCol = Math.floor((screenLeftPx + dims.w / scale) / TILE_SIZE)
+  const endRow = Math.floor((screenTopPx + dims.h / scale) / TILE_SIZE)
+
+  const tiles = []
+  for (let row = startRow; row <= endRow; row++) {
+    for (let col = startCol; col <= endCol; col++) {
+      tiles.push({
+        url: `https://tile.openstreetmap.org/${mapZoom}/${col}/${row}.png`,
+        left: col * TILE_SIZE - screenLeftPx,
+        top: row * TILE_SIZE - screenTopPx,
+        key: `${mapZoom}-${col}-${row}`,
+      })
+    }
   }
 
   const handlePointerDown = (e: React.PointerEvent) => {
@@ -77,13 +109,13 @@ export default function MapView() {
     if (activePointers.current.size === 1) {
       const dx = e.clientX - oldPos.x
       const dy = e.clientY - oldPos.y
-      if (mapRef.current) {
-        const rect = mapRef.current.getBoundingClientRect()
-        const dLng = -(dx / rect.width) * lngRange
-        const dLat = (dy / rect.height) * latRange
-        setCenterLng((prev) => prev + dLng)
-        setCenterLat((prev) => prev + dLat)
-      }
+
+      const newCenterX = centerPx.x - dx / scale
+      const newCenterY = centerPx.y - dy / scale
+
+      const newCenter = pxToLatLng(newCenterX, newCenterY, mapZoom)
+      setCenterLng(newCenter.lng)
+      setCenterLat(newCenter.lat)
     } else if (activePointers.current.size === 2) {
       const prevDist = Math.hypot(
         oldPointers[0].x - oldPointers[1].x,
@@ -93,9 +125,8 @@ export default function MapView() {
         newPointers[0].x - newPointers[1].x,
         newPointers[0].y - newPointers[1].y,
       )
-      if (prevDist > 0) {
-        const scale = newDist / prevDist
-        setZoom((prev) => Math.max(0.2, Math.min(prev * scale, 20)))
+      if (prevDist > 0 && newDist > 0) {
+        setZoom((prev) => Math.max(2, Math.min(prev + Math.log2(newDist / prevDist), 19)))
       }
     }
   }
@@ -107,13 +138,11 @@ export default function MapView() {
 
   const handleWheel = (e: React.WheelEvent) => {
     if ((e.target as Element).closest('.no-drag')) return
-    const zoomFactor = e.deltaY > 0 ? 0.9 : 1.1
-    setZoom((prev) => Math.max(0.2, Math.min(prev * zoomFactor, 20)))
+    setZoom((prev) => Math.max(2, Math.min(prev + (e.deltaY > 0 ? -0.5 : 0.5), 19)))
   }
 
   return (
     <div
-      ref={mapRef}
       className="animate-fade-in relative flex-1 w-full min-h-[calc(100vh-140px)] overflow-hidden bg-[#eef0f2] touch-none cursor-grab active:cursor-grabbing"
       onClick={() => setSelectedPlace(null)}
       onPointerDown={handlePointerDown}
@@ -123,13 +152,21 @@ export default function MapView() {
       onWheel={handleWheel}
     >
       <div
-        className="pointer-events-none absolute inset-0 opacity-[0.05]"
-        style={{
-          backgroundImage: 'radial-gradient(#000 2px, transparent 2px)',
-          backgroundSize: `${30 * Math.max(0.5, zoom)}px ${30 * Math.max(0.5, zoom)}px`,
-          backgroundPosition: `${centerLng * 10000 * zoom}px ${-centerLat * 10000 * zoom}px`,
-        }}
-      ></div>
+        className="absolute inset-0 origin-top-left will-change-transform"
+        style={{ transform: `scale(${scale})` }}
+      >
+        {tiles.map((t) => (
+          <img
+            key={t.key}
+            src={t.url}
+            className="absolute pointer-events-none select-none"
+            style={{ left: t.left, top: t.top, width: TILE_SIZE, height: TILE_SIZE }}
+            alt=""
+            loading="lazy"
+            draggable={false}
+          />
+        ))}
+      </div>
 
       <div className="no-drag absolute left-1/2 top-4 z-50 flex w-[90%] max-w-md -translate-x-1/2 flex-col gap-3 rounded-2xl border border-white/50 bg-white/90 p-3 shadow-xl backdrop-blur-md sm:flex-row cursor-auto">
         <Select value={categoryFilter} onValueChange={setCategoryFilter}>
@@ -164,42 +201,58 @@ export default function MapView() {
 
       <div className="no-drag absolute right-4 bottom-24 z-50 flex flex-col gap-2">
         <button
-          onClick={() => setZoom((z) => Math.min(z * 1.5, 20))}
+          onClick={() => setZoom((z) => Math.min(z + 1, 19))}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-700 shadow-md border border-slate-200 hover:bg-slate-50 transition-colors"
         >
           <Plus className="h-5 w-5" />
         </button>
         <button
-          onClick={() => setZoom((z) => Math.max(0.2, z / 1.5))}
+          onClick={() => setZoom((z) => Math.max(2, z - 1))}
           className="flex h-10 w-10 items-center justify-center rounded-xl bg-white text-slate-700 shadow-md border border-slate-200 hover:bg-slate-50 transition-colors"
         >
           <Minus className="h-5 w-5" />
         </button>
       </div>
 
-      <div className="absolute inset-0">
-        {filteredPlaces.map((place) => {
-          const isOpen = isPlaceOpen(place.operatingHours)
-          const isFeatured = place.featured
+      <div className="no-drag absolute bottom-24 left-4 z-50 rounded-xl bg-white/90 p-3 shadow-md backdrop-blur-md text-xs border border-slate-200 cursor-auto">
+        <p className="font-bold text-slate-800 mb-2 uppercase tracking-widest text-[10px]">
+          Legenda
+        </p>
+        <div className="flex items-center gap-2 mb-1.5">
+          <div className="w-3.5 h-3.5 rounded-full bg-[#FFD700] border border-[#E6C200]"></div>
+          <span className="text-slate-600 font-medium">Destaques</span>
+        </div>
+        <div className="flex items-center gap-2">
+          <div className="w-3.5 h-3.5 rounded-full bg-[#003399] border border-[#002266]"></div>
+          <span className="text-slate-600 font-medium">Locais</span>
+        </div>
+      </div>
 
+      <div className="absolute inset-0 pointer-events-none overflow-hidden">
+        {filteredPlaces.map((place) => {
+          const markerPx = latLngToPx(place.coordinates.lat, place.coordinates.lng, mapZoom)
+          const left = (markerPx.x - screenLeftPx) * scale
+          const top = (markerPx.y - screenTopPx) * scale
+
+          if (left < -50 || left > dims.w + 50 || top < -50 || top > dims.h + 50) return null
+
+          const isFeatured = place.featured
           const markerColor = isFeatured
             ? 'bg-[#FFD700] border-[#E6C200] text-black'
-            : isOpen
-              ? 'bg-[#2E8B57] border-[#1F633D] text-white'
-              : 'bg-[#003399] border-[#002266] text-white'
-          const iconColor = isFeatured ? 'fill-black/20' : 'fill-white/20'
+            : 'bg-[#003399] border-[#002266] text-white'
+          const iconColor = isFeatured ? 'fill-black/20 text-black' : 'fill-white/20 text-white'
 
           return (
             <div
               key={place.id}
-              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 transition-all duration-300"
-              style={{ top: getTop(place.coordinates.lat), left: getLeft(place.coordinates.lng) }}
+              className="absolute z-20 -translate-x-1/2 -translate-y-1/2 pointer-events-auto"
+              style={{ top, left }}
               onClick={(e) => e.stopPropagation()}
             >
               <button
                 onClick={() => setSelectedPlace(place.id)}
                 className={cn(
-                  'no-drag flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-lg transition-all duration-300',
+                  'no-drag flex h-10 w-10 items-center justify-center rounded-full border-2 shadow-lg transition-transform duration-200',
                   selectedPlace === place.id
                     ? 'z-30 scale-125 ring-4 ring-primary/30'
                     : 'hover:scale-110',
@@ -226,7 +279,7 @@ export default function MapView() {
                         {place.category}
                       </span>
                       <span className="text-xs font-medium text-slate-500">
-                        {isOpen ? 'Aberto' : 'Fechado'}
+                        {isPlaceOpen(place.operatingHours) ? 'Aberto' : 'Fechado'}
                       </span>
                     </div>
                     <Link
@@ -245,8 +298,11 @@ export default function MapView() {
 
         {location && (
           <div
-            className="pointer-events-none absolute z-30 -translate-x-1/2 -translate-y-1/2 transition-all duration-500"
-            style={{ top: getTop(location.lat), left: getLeft(location.lng) }}
+            className="absolute z-30 -translate-x-1/2 -translate-y-1/2 transition-transform duration-500"
+            style={{
+              left: (latLngToPx(location.lat, location.lng, mapZoom).x - screenLeftPx) * scale,
+              top: (latLngToPx(location.lat, location.lng, mapZoom).y - screenTopPx) * scale,
+            }}
           >
             <div className="relative flex flex-col items-center">
               <div className="flex h-12 w-12 items-center justify-center">
@@ -254,9 +310,6 @@ export default function MapView() {
                 <span className="relative flex h-5 w-5 items-center justify-center rounded-full border-2 border-white bg-blue-500 shadow-md">
                   <Navigation className="h-3 w-3 rotate-45 fill-white text-white" />
                 </span>
-              </div>
-              <div className="absolute top-full mt-1 whitespace-nowrap rounded-full bg-slate-900 px-3 py-1 text-[11px] font-bold text-white shadow-md">
-                Sua localização
               </div>
             </div>
           </div>

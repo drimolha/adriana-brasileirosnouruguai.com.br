@@ -195,7 +195,10 @@ export function AdminPlacesList({ places, categories, onEdit, onDelete }: Props)
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => onEdit(place)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onEdit(place)
+                  }}
                   className="h-8 w-8 text-slate-500 hover:text-primary bg-background shadow-sm border border-border/50"
                 >
                   <Edit className="h-4 w-4" />
@@ -203,7 +206,10 @@ export function AdminPlacesList({ places, categories, onEdit, onDelete }: Props)
                 <Button
                   variant="ghost"
                   size="icon"
-                  onClick={() => onDelete(place.id)}
+                  onClick={(e) => {
+                    e.stopPropagation()
+                    onDelete(place.id)
+                  }}
                   className="h-8 w-8 text-slate-500 hover:text-destructive bg-background shadow-sm border border-border/50"
                 >
                   <Trash2 className="h-4 w-4" />

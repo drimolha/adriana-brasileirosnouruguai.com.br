@@ -11,9 +11,11 @@ import {
 import { Textarea } from '@/components/ui/textarea'
 import { Button } from '@/components/ui/button'
 import { useState } from 'react'
+import { useAuth } from '@/context/AuthContext'
 import { toast } from 'sonner'
 
 export function PlaceCheckInTicket({ checkInTime }: { checkInTime: number }) {
+  const { currentUser } = useAuth()
   const [reportOpen, setReportOpen] = useState(false)
   const [issue, setIssue] = useState('')
 
@@ -25,9 +27,10 @@ export function PlaceCheckInTicket({ checkInTime }: { checkInTime: number }) {
       toast.error('Descreva o problema antes de enviar.')
       return
     }
-    toast.success('Problema reportado com sucesso', {
-      description: 'Nossa equipe de suporte entrará em contato via WhatsApp.',
-    })
+    const msg = encodeURIComponent(
+      `Olá, tive um problema no estabelecimento usando o app.\nTelefone de cadastro: ${currentUser?.phone || 'Não informado'}\nProblema: ${issue}`,
+    )
+    window.open(`https://wa.me/5547999999999?text=${msg}`, '_blank')
     setReportOpen(false)
     setIssue('')
   }

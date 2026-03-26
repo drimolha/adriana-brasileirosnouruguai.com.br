@@ -8,19 +8,23 @@ import { AdminUsersList } from '@/components/AdminUsersList'
 import { Button } from '@/components/ui/button'
 import { useAccess } from '@/context/AccessContext'
 import { usePlaces } from '@/context/PlacesContext'
+import { useAuth } from '@/context/AuthContext'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { LogOut, Plus, Settings, List, LayoutDashboard, Users } from 'lucide-react'
 import logoUrl from '@/assets/favicon-bnu-9afaa.jpg'
 import { Place } from '@/data/places'
 import { toast } from 'sonner'
+import { Navigate } from 'react-router-dom'
 
 export default function Admin() {
   const { isGranted, grantAccess, revokeAccess } = useAccess()
+  const { currentUser } = useAuth()
   const { places, addPlace, updatePlace, deletePlace, categories } = usePlaces()
   const [activeTab, setActiveTab] = useState('dashboard')
   const [editingPlace, setEditingPlace] = useState<Place | undefined>(undefined)
 
   if (!isGranted) {
+    if (currentUser) return <Navigate to="/profile" replace />
     return <AdminLogin onLogin={grantAccess} />
   }
 

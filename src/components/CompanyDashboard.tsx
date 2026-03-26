@@ -29,7 +29,7 @@ import {
 } from 'lucide-react'
 
 export function CompanyDashboard() {
-  const { currentUser, logout } = useAuth()
+  const { currentUser } = useAuth()
   const { places, updatePlace } = usePlaces()
   const [searchParams] = useSearchParams()
 
@@ -65,8 +65,10 @@ export function CompanyDashboard() {
   const handleContactSubmit = (e: React.FormEvent) => {
     e.preventDefault()
     if (!contactSubject || !contactMessage) return
-    toast.success('Mensagem enviada com sucesso!', {
-      description: 'Nossa equipe responderá ao seu e-mail de cadastro em breve.',
+    const body = encodeURIComponent(contactMessage)
+    window.location.href = `mailto:contato@brasileirosnouruguai.com.br?subject=Contato do Parceiro do App - ${contactSubject}&body=${body}`
+    toast.success('Mensagem preparada!', {
+      description: 'Seu cliente de e-mail foi aberto com os detalhes.',
     })
     setContactSubject('')
     setContactMessage('')
@@ -77,7 +79,6 @@ export function CompanyDashboard() {
       <div className="flex flex-col items-center justify-center p-8 text-center bg-white rounded-2xl shadow-sm border border-slate-100">
         <h2 className="text-xl font-bold mb-2">Estabelecimento não encontrado</h2>
         <p className="text-slate-500 mb-6">Não foi possível carregar os dados do seu negócio.</p>
-        <Button onClick={logout}>Sair da Conta</Button>
       </div>
     )
   }
@@ -98,9 +99,6 @@ export function CompanyDashboard() {
             Gerenciando: <strong className="text-slate-700">{managedPlace.name}</strong>
           </p>
         </div>
-        <Button variant="outline" onClick={logout} className="rounded-xl shadow-sm bg-white">
-          Sair da Conta
-        </Button>
       </div>
 
       <Tabs defaultValue={defaultTab} className="w-full">
