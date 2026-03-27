@@ -23,6 +23,7 @@ export interface Place {
   discountBadge: string
   coverImage: string
   galleryImages: string[]
+  logoImage?: string
   description: string
   discountDescription: string
   address: string

@@ -4,24 +4,30 @@ import { AspectRatio } from '@/components/ui/aspect-ratio'
 import { Button } from '@/components/ui/button'
 import { Upload, Link as LinkIcon } from 'lucide-react'
 import { useRef, useState } from 'react'
-import { cropImageTo4by3 } from '@/lib/imageUtils'
+import { cropImageTo4by3, cropImageToSquare } from '@/lib/imageUtils'
 import { toast } from 'sonner'
 
 interface Props {
   coverImage: string
   galleryImages: string[]
+  logoImage?: string
+  showLogoField?: boolean
   onChangeCover: (val: string) => void
   onChangeGallery: (idx: number, val: string) => void
+  onChangeLogo?: (val: string) => void
 }
 
 export function AdminImageFields({
   coverImage,
   galleryImages,
+  logoImage,
+  showLogoField,
   onChangeCover,
   onChangeGallery,
+  onChangeLogo,
 }: Props) {
   const fileInputRef = useRef<HTMLInputElement>(null)
-  const [activeUploadIndex, setActiveUploadIndex] = useState<number | 'cover' | null>(null)
+  const [activeUploadIndex, setActiveUploadIndex] = useState<number | 'cover' | 'logo' | null>(null)
 
   const handleFileChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -33,13 +39,19 @@ export function AdminImageFields({
     }
 
     try {
-      const dataUrl = await cropImageTo4by3(file)
-      if (activeUploadIndex === 'cover') {
+      if (activeUploadIndex === 'logo') {
+        const dataUrl = await cropImageToSquare(file)
+        if (onChangeLogo) onChangeLogo(dataUrl)
+        toast.success('Logotipo processado e recortado (1:1) com sucesso.')
+      } else if (activeUploadIndex === 'cover') {
+        const dataUrl = await cropImageTo4by3(file)
         onChangeCover(dataUrl)
+        toast.success('Imagem processada e recortada (4:3) com sucesso.')
       } else if (typeof activeUploadIndex === 'number') {
+        const dataUrl = await cropImageTo4by3(file)
         onChangeGallery(activeUploadIndex, dataUrl)
+        toast.success('Imagem processada e recortada (4:3) com sucesso.')
       }
-      toast.success('Imagem processada e recortada (4:3) com sucesso.')
     } catch (err) {
       toast.error('Erro ao processar imagem')
     }
@@ -48,7 +60,7 @@ export function AdminImageFields({
     setActiveUploadIndex(null)
   }
 
-  const triggerUpload = (target: number | 'cover') => {
+  const triggerUpload = (target: number | 'cover' | 'logo') => {
     setActiveUploadIndex(target)
     fileInputRef.current?.click()
   }
@@ -62,6 +74,30 @@ export function AdminImageFields({
         accept=".jpg,.jpeg,.png"
         className="hidden"
       />
+
+      {showLogoField && (
+        <div className="space-y-3">
+          <Label className="text-base">Logo do Estabelecimento (1:1 - Circular)</Label>
+          <div className="flex gap-2">
+            <Input
+              value={logoImage || ''}
+              onChange={(e) => onChangeLogo && onChangeLogo(e.target.value)}
+              placeholder="URL da Imagem do Logo..."
+              className="flex-1"
+            />
+            <Button type="button" variant="outline" onClick={() => triggerUpload('logo')}>
+              <Upload className="h-4 w-4 mr-2" /> Upload
+            </Button>
+          </div>
+          {logoImage && (
+            <div className="w-24 h-24 mt-2">
+              <div className="w-full h-full rounded-full overflow-hidden border border-slate-200 bg-muted">
+                <img src={logoImage} alt="Logo" className="object-cover w-full h-full" />
+              </div>
+            </div>
+          )}
+        </div>
+      )}
 
       <div className="space-y-3">
         <Label className="text-base">Imagem de Capa (4:3)</Label>

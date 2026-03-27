@@ -349,12 +349,15 @@ export function AdminPlaceForm({ initialData, onSave, onCancel, isCompanyView }:
       <AdminImageFields
         coverImage={formData.coverImage || ''}
         galleryImages={formData.galleryImages || ['', '', '', '', '']}
+        logoImage={formData.logoImage || ''}
+        showLogoField={!isCompanyView}
         onChangeCover={(v) => handleChange('coverImage', v)}
         onChangeGallery={(i, v) => {
           const newGal = [...(formData.galleryImages || ['', '', '', '', ''])]
           newGal[i] = v
           handleChange('galleryImages', newGal)
         }}
+        onChangeLogo={(v) => handleChange('logoImage', v)}
       />
 
       {!isCompanyView && initialData?.id && <AdminPlaceReviews placeId={initialData.id} />}

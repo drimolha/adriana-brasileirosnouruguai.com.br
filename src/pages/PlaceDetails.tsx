@@ -313,10 +313,21 @@ END:VCALENDAR`
             </div>
           </div>
 
-          <h1 className="mb-2 font-display text-3xl font-bold leading-tight text-slate-900">
-            {place.name}
-          </h1>
-          <p className="mb-4 text-lg font-medium text-slate-500">{place.city}</p>
+          <div className="mb-4 flex items-center gap-4">
+            {place.logoImage && (
+              <img
+                src={place.logoImage}
+                alt={`Logo ${place.name}`}
+                className="h-16 w-16 shrink-0 rounded-full border border-slate-100 bg-white object-cover shadow-sm"
+              />
+            )}
+            <div>
+              <h1 className="mb-1 font-display text-3xl font-bold leading-tight text-slate-900">
+                {place.name}
+              </h1>
+              <p className="text-lg font-medium text-slate-500">{place.city}</p>
+            </div>
+          </div>
 
           <div className="mb-8 flex flex-wrap items-center gap-4 border-b border-slate-100 pb-6 text-sm text-slate-600">
             {!isTour && (
