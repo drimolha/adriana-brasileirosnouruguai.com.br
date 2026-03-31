@@ -220,6 +220,7 @@ export function AdminDisplayManager() {
                   <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead>Local</TableHead>
                   <TableHead>Tipo</TableHead>
+                  {isAdminMaster && <TableHead className="text-center">Cliques</TableHead>}
                   <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -240,22 +241,17 @@ export function AdminDisplayManager() {
                       <GripVertical className="h-5 w-5 mx-auto" />
                     </TableCell>
                     <TableCell className="text-center font-bold text-slate-500">{i + 1}</TableCell>
-                    <TableCell className="font-semibold text-slate-900">
-                      {p.name}
-                      {isAdminMaster && (
-                        <span
-                          className="ml-2 text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full inline-flex items-center"
-                          title="Cliques no Destaque"
-                        >
-                          {p.highlightClickCount || 0} cliques
-                        </span>
-                      )}
-                    </TableCell>
+                    <TableCell className="font-semibold text-slate-900">{p.name}</TableCell>
                     <TableCell>
                       <Badge variant="outline" className="font-medium bg-white text-slate-700">
                         {p.category}
                       </Badge>
                     </TableCell>
+                    {isAdminMaster && (
+                      <TableCell className="text-center font-medium text-slate-600">
+                        {p.highlightClickCount || 0}
+                      </TableCell>
+                    )}
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -271,7 +267,10 @@ export function AdminDisplayManager() {
                 ))}
                 {featuredPlaces.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-8 text-slate-500 bg-white">
+                    <TableCell
+                      colSpan={isAdminMaster ? 6 : 5}
+                      className="text-center py-8 text-slate-500 bg-white"
+                    >
                       Nenhum destaque configurado.
                     </TableCell>
                   </TableRow>
