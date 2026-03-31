@@ -38,8 +38,17 @@ export function AdminDisplayManager() {
       .sort((a, b) => ((a as any).featuredOrder ?? 999) - ((b as any).featuredOrder ?? 999))
   }, [places])
 
+  const [searchHighlight, setSearchHighlight] = useState('')
   const [selectedHighlight, setSelectedHighlight] = useState('')
+  const [isSearchOpen, setIsSearchOpen] = useState(false)
   const [draggedId, setDraggedId] = useState<string | null>(null)
+
+  const searchResults = useMemo(() => {
+    if (searchHighlight.length < 3) return []
+    return places.filter(
+      (p) => !p.featured && p.name.toLowerCase().includes(searchHighlight.toLowerCase()),
+    )
+  }, [searchHighlight, places])
 
   const handleAddHighlight = () => {
     if (!selectedHighlight) return
@@ -50,6 +59,8 @@ export function AdminDisplayManager() {
     const newOrder = featuredPlaces.length + 1
     updatePlace(selectedHighlight, { featured: true, featuredOrder: newOrder } as any)
     setSelectedHighlight('')
+    setSearchHighlight('')
+    setIsSearchOpen(false)
     toast.success('Destaque adicionado!')
   }
 
@@ -150,25 +161,52 @@ export function AdminDisplayManager() {
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
-          <div className="flex gap-3 items-center max-w-lg">
-            <Select value={selectedHighlight} onValueChange={setSelectedHighlight}>
-              <SelectTrigger className="flex-1">
-                <SelectValue placeholder="Selecione um local para destacar..." />
-              </SelectTrigger>
-              <SelectContent>
-                {places
-                  .filter((p) => !p.featured)
-                  .map((p) => (
-                    <SelectItem key={p.id} value={p.id}>
-                      {p.name} ({p.city})
-                    </SelectItem>
-                  ))}
-              </SelectContent>
-            </Select>
+          <div className="flex gap-3 items-center max-w-lg relative">
+            <div className="relative flex-1">
+              <Input
+                placeholder="Selecione um local para destacar..."
+                value={searchHighlight}
+                onChange={(e) => {
+                  setSearchHighlight(e.target.value)
+                  setSelectedHighlight('')
+                  setIsSearchOpen(e.target.value.length >= 3)
+                }}
+                onFocus={() => {
+                  if (searchHighlight.length >= 3) setIsSearchOpen(true)
+                }}
+                onBlur={() => setTimeout(() => setIsSearchOpen(false), 200)}
+              />
+              {isSearchOpen && searchHighlight.length >= 3 && (
+                <div className="absolute z-10 w-full mt-1 bg-white border border-slate-200 rounded-lg shadow-lg max-h-60 overflow-y-auto">
+                  {searchResults.length === 0 ? (
+                    <div className="p-3 text-sm text-slate-500 text-center">
+                      Nenhum local encontrado.
+                    </div>
+                  ) : (
+                    searchResults.map((p) => (
+                      <div
+                        key={p.id}
+                        className={cn(
+                          'p-3 text-sm cursor-pointer hover:bg-slate-50 transition-colors border-b border-slate-100 last:border-0',
+                          selectedHighlight === p.id && 'bg-slate-50 font-medium',
+                        )}
+                        onClick={() => {
+                          setSelectedHighlight(p.id)
+                          setSearchHighlight(p.name)
+                          setIsSearchOpen(false)
+                        }}
+                      >
+                        {p.name} <span className="text-slate-400 text-xs ml-1">({p.city})</span>
+                      </div>
+                    ))
+                  )}
+                </div>
+              )}
+            </div>
             <Button
               onClick={handleAddHighlight}
               disabled={featuredPlaces.length >= 10 || !selectedHighlight}
-              className="gap-2 shrink-0"
+              className="gap-2 shrink-0 bg-[#8291c4] hover:bg-[#7280af] text-white"
             >
               <Plus className="h-4 w-4" /> Adicionar
             </Button>
@@ -181,9 +219,6 @@ export function AdminDisplayManager() {
                   <TableHead className="w-12 text-center"></TableHead>
                   <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead>Local</TableHead>
-                  {isAdminMaster && (
-                    <TableHead className="text-center">Cliques (Destaque)</TableHead>
-                  )}
                   <TableHead>Tipo</TableHead>
                   <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
@@ -197,29 +232,36 @@ export function AdminDisplayManager() {
                     onDragOver={handleDragOver}
                     onDrop={(e) => handleDrop(e, p.id)}
                     className={cn(
-                      'cursor-move transition-colors hover:bg-slate-50',
+                      'cursor-move transition-colors hover:bg-slate-50 bg-white',
                       draggedId === p.id && 'bg-slate-100 opacity-50',
                     )}
                   >
-                    <TableCell className="text-center text-slate-400">
-                      <GripVertical className="h-4 w-4 mx-auto" />
+                    <TableCell className="text-center text-slate-300">
+                      <GripVertical className="h-5 w-5 mx-auto" />
                     </TableCell>
-                    <TableCell className="text-center font-bold text-slate-400">{i + 1}</TableCell>
-                    <TableCell className="font-medium">{p.name}</TableCell>
-                    {isAdminMaster && (
-                      <TableCell className="text-center font-semibold text-brand-yellow-foreground">
-                        {p.highlightClickCount || 0}
-                      </TableCell>
-                    )}
+                    <TableCell className="text-center font-bold text-slate-500">{i + 1}</TableCell>
+                    <TableCell className="font-semibold text-slate-900">
+                      {p.name}
+                      {isAdminMaster && (
+                        <span
+                          className="ml-2 text-xs font-semibold text-slate-500 bg-slate-100 px-2.5 py-0.5 rounded-full inline-flex items-center"
+                          title="Cliques no Destaque"
+                        >
+                          {p.highlightClickCount || 0} cliques
+                        </span>
+                      )}
+                    </TableCell>
                     <TableCell>
-                      <Badge variant="outline">{p.category}</Badge>
+                      <Badge variant="outline" className="font-medium bg-white text-slate-700">
+                        {p.category}
+                      </Badge>
                     </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveHighlight(p.id)}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer relative z-10"
+                        className="text-red-400 hover:text-red-600 hover:bg-red-50 cursor-pointer relative z-10"
                         onMouseDown={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-4 w-4" />
@@ -229,10 +271,7 @@ export function AdminDisplayManager() {
                 ))}
                 {featuredPlaces.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={isAdminMaster ? 6 : 5}
-                      className="text-center py-6 text-slate-500"
-                    >
+                    <TableCell colSpan={5} className="text-center py-8 text-slate-500 bg-white">
                       Nenhum destaque configurado.
                     </TableCell>
                   </TableRow>

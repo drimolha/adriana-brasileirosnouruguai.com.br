@@ -18,7 +18,7 @@ import {
 } from '@/components/ui/dropdown-menu'
 
 export default function Index() {
-  const { places, categories, cities } = usePlaces()
+  const { places, categories, cities, recordHighlightClick } = usePlaces()
   const { calculateDistance } = useGeo()
   const plugin = useRef(Autoplay({ delay: 4000, stopOnInteraction: true }))
 
@@ -141,7 +141,7 @@ export default function Index() {
                   key={`feat-${place.id}`}
                   className="pl-2 md:basis-3/4 md:pl-4 lg:basis-2/3 xl:basis-1/2"
                 >
-                  <Link to={`/place/${place.id}`}>
+                  <Link to={`/place/${place.id}`} onClick={() => recordHighlightClick(place.id)}>
                     <div className="group relative h-48 w-full overflow-hidden rounded-2xl md:h-64">
                       <img
                         src={place.coverImage}

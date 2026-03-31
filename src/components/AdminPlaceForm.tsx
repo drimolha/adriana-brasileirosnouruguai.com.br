@@ -327,21 +327,6 @@ export function AdminPlaceForm({ initialData, onSave, onCancel, isCompanyView }:
             placeholder="https://..."
           />
         </div>
-
-        {!isCompanyView && (
-          <div className="space-y-2">
-            <Label>Ordem de Exibição</Label>
-            <Input
-              type="number"
-              value={formData.order ?? ''}
-              onChange={(e) => {
-                const val = parseInt(e.target.value, 10)
-                handleChange('order', isNaN(val) ? undefined : val)
-              }}
-              placeholder="Ex: 1"
-            />
-          </div>
-        )}
       </div>
 
       <div className="space-y-2">
