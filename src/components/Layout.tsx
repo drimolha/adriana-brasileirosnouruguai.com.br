@@ -117,7 +117,7 @@ export function Layout() {
 
   return (
     <div className="min-h-screen bg-background text-foreground flex flex-col font-sans relative">
-      {!isCompany && !isAdminMaster && (
+      {!currentUser && !isAdminMaster && (
         <div className="w-full bg-slate-900 text-slate-400 py-1.5 px-4 flex justify-end text-[10px] font-bold uppercase tracking-widest z-50 relative">
           <Link to="/empresa" className="hover:text-white transition-colors">
             Acesso Empresa
