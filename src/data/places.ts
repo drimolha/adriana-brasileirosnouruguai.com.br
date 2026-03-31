@@ -48,6 +48,7 @@ export interface Place {
   accessCount?: number
   couponClickCount?: number
   checkInCount?: number
+  highlightClickCount?: number
 
   // Flash Offer
   flashOffer?: FlashOffer

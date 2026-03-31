@@ -5,6 +5,7 @@ import { Place } from '@/data/places'
 import { useFavorites } from '@/context/FavoritesContext'
 import { useGeo } from '@/context/GeoContext'
 import { useAuth } from '@/context/AuthContext'
+import { usePlaces } from '@/context/PlacesContext'
 import { cn, isPlaceOpen } from '@/lib/utils'
 import { Badge } from '@/components/ui/badge'
 
@@ -17,6 +18,7 @@ export function PlaceCard({ place, activeCheckIn }: PlaceCardProps) {
   const { isFavorite, toggleFavorite } = useFavorites()
   const { calculateDistance } = useGeo()
   const { currentUser } = useAuth()
+  const { recordHighlightClick } = usePlaces()
   const [now, setNow] = useState(Date.now())
 
   useEffect(() => {
@@ -42,8 +44,14 @@ export function PlaceCard({ place, activeCheckIn }: PlaceCardProps) {
     toggleFavorite(place.id)
   }
 
+  const handleCardClick = () => {
+    if (place.featured) {
+      recordHighlightClick(place.id)
+    }
+  }
+
   return (
-    <Link to={`/place/${place.id}`} className="group block h-full">
+    <Link to={`/place/${place.id}`} onClick={handleCardClick} className="group block h-full">
       <div className="relative flex h-full flex-col overflow-hidden rounded-2xl border border-slate-100 bg-white shadow-sm transition-all duration-300 hover:shadow-xl">
         <div className="relative aspect-[4/3] w-full shrink-0 overflow-hidden bg-slate-100">
           <img

@@ -24,6 +24,7 @@ interface PlacesContextType {
   deleteBadge: (b: string) => void
   recordAccess: (id: string) => void
   recordCouponClick: (id: string) => void
+  recordHighlightClick: (id: string) => void
   createFlashOffer: (id: string, offer: FlashOffer | undefined) => void
 }
 
@@ -161,6 +162,14 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
     )
   }
 
+  const recordHighlightClick = (id: string) => {
+    setPlaces((prev) =>
+      prev.map((p) =>
+        p.id === id ? { ...p, highlightClickCount: (p.highlightClickCount || 0) + 1 } : p,
+      ),
+    )
+  }
+
   const createFlashOffer = (id: string, offer: FlashOffer | undefined) => {
     setPlaces((prev) => prev.map((p) => (p.id === id ? { ...p, flashOffer: offer } : p)))
   }
@@ -184,6 +193,7 @@ export function PlacesProvider({ children }: { children: React.ReactNode }) {
         deleteBadge,
         recordAccess,
         recordCouponClick,
+        recordHighlightClick,
         createFlashOffer,
       },
     },

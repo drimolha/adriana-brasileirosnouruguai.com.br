@@ -1,5 +1,6 @@
 import { useState, useMemo } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
+import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Table,
@@ -25,6 +26,10 @@ import { cn } from '@/lib/utils'
 
 export function AdminDisplayManager() {
   const { places, updatePlace } = usePlaces()
+  const { currentUser } = useAuth()
+
+  const isAdminMaster =
+    (currentUser as any)?.role === 'admin_master' || (currentUser as any)?.isMaster === true
 
   // Destaques State
   const featuredPlaces = useMemo(() => {
@@ -176,6 +181,9 @@ export function AdminDisplayManager() {
                   <TableHead className="w-12 text-center"></TableHead>
                   <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead>Local</TableHead>
+                  {isAdminMaster && (
+                    <TableHead className="text-center">Cliques (Destaque)</TableHead>
+                  )}
                   <TableHead>Tipo</TableHead>
                   <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
@@ -198,6 +206,11 @@ export function AdminDisplayManager() {
                     </TableCell>
                     <TableCell className="text-center font-bold text-slate-400">{i + 1}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
+                    {isAdminMaster && (
+                      <TableCell className="text-center font-semibold text-brand-yellow-foreground">
+                        {p.highlightClickCount || 0}
+                      </TableCell>
+                    )}
                     <TableCell>
                       <Badge variant="outline">{p.category}</Badge>
                     </TableCell>
@@ -216,7 +229,10 @@ export function AdminDisplayManager() {
                 ))}
                 {featuredPlaces.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={5} className="text-center py-6 text-slate-500">
+                    <TableCell
+                      colSpan={isAdminMaster ? 6 : 5}
+                      className="text-center py-6 text-slate-500"
+                    >
                       Nenhum destaque configurado.
                     </TableCell>
                   </TableRow>
