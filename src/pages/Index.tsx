@@ -83,7 +83,11 @@ export default function Index() {
     now,
   ])
 
-  const featured = places.filter((p) => p.featured)
+  const featured = useMemo(() => {
+    return places
+      .filter((p) => p.featured)
+      .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
+  }, [places])
 
   return (
     <div className="flex flex-col gap-6 pb-8 pt-4 md:px-8 md:pt-8">

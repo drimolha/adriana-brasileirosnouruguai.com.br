@@ -79,6 +79,7 @@ export function AdminPlacesList({ places, categories, onEdit, onDelete }: Props)
           <TableHeader className="bg-muted/30">
             <TableRow>
               <TableHead className="w-[120px]">Imagem</TableHead>
+              <TableHead className="w-[80px]">Ordem</TableHead>
               <TableHead>Nome</TableHead>
               <TableHead>Categoria</TableHead>
               <TableHead>Cidade</TableHead>
@@ -102,6 +103,9 @@ export function AdminPlacesList({ places, categories, onEdit, onDelete }: Props)
                       />
                     </AspectRatio>
                   </div>
+                </TableCell>
+                <TableCell className="font-medium text-muted-foreground">
+                  {place.order ?? '-'}
                 </TableCell>
                 <TableCell className="font-medium">{place.name}</TableCell>
                 <TableCell>
@@ -145,7 +149,7 @@ export function AdminPlacesList({ places, categories, onEdit, onDelete }: Props)
             ))}
             {filteredPlaces.length === 0 && (
               <TableRow>
-                <TableCell colSpan={6} className="text-center text-muted-foreground py-12">
+                <TableCell colSpan={7} className="text-center text-muted-foreground py-12">
                   Nenhum local encontrado.
                 </TableCell>
               </TableRow>
@@ -174,6 +178,9 @@ export function AdminPlacesList({ places, categories, onEdit, onDelete }: Props)
               <div className="flex-1 flex flex-col justify-center gap-1 overflow-hidden">
                 <h3 className="font-bold text-sm leading-tight truncate">{place.name}</h3>
                 <div className="flex flex-wrap items-center gap-1.5 text-xs text-muted-foreground">
+                  <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-background">
+                    Ordem: {place.order ?? '-'}
+                  </Badge>
                   <Badge variant="outline" className="text-[10px] px-1.5 py-0 bg-background">
                     {place.category}
                   </Badge>
