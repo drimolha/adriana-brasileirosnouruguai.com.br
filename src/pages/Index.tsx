@@ -86,7 +86,7 @@ export default function Index() {
   const featured = useMemo(() => {
     return places
       .filter((p) => p.featured)
-      .sort((a, b) => (a.order ?? 999999) - (b.order ?? 999999))
+      .sort((a, b) => ((a as any).featuredOrder ?? 999) - ((b as any).featuredOrder ?? 999))
   }, [places])
 
   return (

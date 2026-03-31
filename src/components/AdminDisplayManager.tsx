@@ -21,13 +21,71 @@ import {
 } from '@/components/ui/select'
 import { Star, GripVertical, Trash2, Plus, ArrowUpDown } from 'lucide-react'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 export function AdminDisplayManager() {
   const { places, updatePlace } = usePlaces()
 
   // Destaques State
-  const featuredPlaces = useMemo(() => places.filter((p) => p.featured), [places])
+  const featuredPlaces = useMemo(() => {
+    return places
+      .filter((p) => p.featured)
+      .sort((a, b) => ((a as any).featuredOrder ?? 999) - ((b as any).featuredOrder ?? 999))
+  }, [places])
+
   const [selectedHighlight, setSelectedHighlight] = useState('')
+  const [draggedId, setDraggedId] = useState<string | null>(null)
+
+  const handleAddHighlight = () => {
+    if (!selectedHighlight) return
+    if (featuredPlaces.length >= 10) {
+      toast.error('Limite atingido', { description: 'Você pode ter no máximo 10 destaques.' })
+      return
+    }
+    const newOrder = featuredPlaces.length + 1
+    updatePlace(selectedHighlight, { featured: true, featuredOrder: newOrder } as any)
+    setSelectedHighlight('')
+    toast.success('Destaque adicionado!')
+  }
+
+  const handleRemoveHighlight = (id: string) => {
+    updatePlace(id, { featured: false, featuredOrder: undefined } as any)
+    toast.success('Destaque removido!')
+  }
+
+  const handleDragStart = (e: React.DragEvent, id: string) => {
+    setDraggedId(id)
+    e.dataTransfer.effectAllowed = 'move'
+  }
+
+  const handleDragOver = (e: React.DragEvent) => {
+    e.preventDefault()
+    e.dataTransfer.dropEffect = 'move'
+  }
+
+  const handleDrop = (e: React.DragEvent, targetId: string) => {
+    e.preventDefault()
+    if (!draggedId || draggedId === targetId) return
+
+    const newOrderList = [...featuredPlaces]
+    const draggedIdx = newOrderList.findIndex((p) => p.id === draggedId)
+    const targetIdx = newOrderList.findIndex((p) => p.id === targetId)
+
+    if (draggedIdx === -1 || targetIdx === -1) return
+
+    const [draggedItem] = newOrderList.splice(draggedIdx, 1)
+    newOrderList.splice(targetIdx, 0, draggedItem)
+
+    newOrderList.forEach((place, index) => {
+      const newOrder = index + 1
+      if ((place as any).featuredOrder !== newOrder) {
+        updatePlace(place.id, { featuredOrder: newOrder } as any)
+      }
+    })
+
+    setDraggedId(null)
+    toast.success('Ordem dos destaques atualizada!')
+  }
 
   // Ordering State
   const [orders, setOrders] = useState<Record<string, string>>(() => {
@@ -38,22 +96,6 @@ export function AdminDisplayManager() {
     return init
   })
   const [searchOrder, setSearchOrder] = useState('')
-
-  const handleAddHighlight = () => {
-    if (!selectedHighlight) return
-    if (featuredPlaces.length >= 10) {
-      toast.error('Limite atingido', { description: 'Você pode ter no máximo 10 destaques.' })
-      return
-    }
-    updatePlace(selectedHighlight, { featured: true })
-    setSelectedHighlight('')
-    toast.success('Destaque adicionado!')
-  }
-
-  const handleRemoveHighlight = (id: string) => {
-    updatePlace(id, { featured: false })
-    toast.success('Destaque removido!')
-  }
 
   const handleOrderChange = (id: string, value: string) => {
     setOrders((prev) => ({ ...prev, [id]: value }))
@@ -99,7 +141,7 @@ export function AdminDisplayManager() {
           </div>
           <CardDescription>
             Selecione até 10 locais ou passeios para aparecerem no carrossel de destaques da página
-            inicial.
+            inicial. Arraste as linhas para reordenar a exibição.
           </CardDescription>
         </CardHeader>
         <CardContent className="space-y-4">
@@ -131,6 +173,7 @@ export function AdminDisplayManager() {
             <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
+                  <TableHead className="w-12 text-center"></TableHead>
                   <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead>Local</TableHead>
                   <TableHead>Tipo</TableHead>
@@ -139,7 +182,20 @@ export function AdminDisplayManager() {
               </TableHeader>
               <TableBody>
                 {featuredPlaces.map((p, i) => (
-                  <TableRow key={p.id}>
+                  <TableRow
+                    key={p.id}
+                    draggable
+                    onDragStart={(e) => handleDragStart(e, p.id)}
+                    onDragOver={handleDragOver}
+                    onDrop={(e) => handleDrop(e, p.id)}
+                    className={cn(
+                      'cursor-move transition-colors hover:bg-slate-50',
+                      draggedId === p.id && 'bg-slate-100 opacity-50',
+                    )}
+                  >
+                    <TableCell className="text-center text-slate-400">
+                      <GripVertical className="h-4 w-4 mx-auto" />
+                    </TableCell>
                     <TableCell className="text-center font-bold text-slate-400">{i + 1}</TableCell>
                     <TableCell className="font-medium">{p.name}</TableCell>
                     <TableCell>
@@ -150,7 +206,8 @@ export function AdminDisplayManager() {
                         variant="ghost"
                         size="icon"
                         onClick={() => handleRemoveHighlight(p.id)}
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
+                        className="text-red-500 hover:text-red-600 hover:bg-red-50 cursor-pointer relative z-10"
+                        onMouseDown={(e) => e.stopPropagation()}
                       >
                         <Trash2 className="h-4 w-4" />
                       </Button>
@@ -159,7 +216,7 @@ export function AdminDisplayManager() {
                 ))}
                 {featuredPlaces.length === 0 && (
                   <TableRow>
-                    <TableCell colSpan={4} className="text-center py-6 text-slate-500">
+                    <TableCell colSpan={5} className="text-center py-6 text-slate-500">
                       Nenhum destaque configurado.
                     </TableCell>
                   </TableRow>
