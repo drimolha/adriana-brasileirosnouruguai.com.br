@@ -1,6 +1,5 @@
 import { useState, useMemo } from 'react'
 import { usePlaces } from '@/context/PlacesContext'
-import { useAuth } from '@/context/AuthContext'
 import { Card, CardContent, CardHeader, CardTitle, CardDescription } from '@/components/ui/card'
 import {
   Table,
@@ -26,10 +25,6 @@ import { cn } from '@/lib/utils'
 
 export function AdminDisplayManager() {
   const { places, updatePlace } = usePlaces()
-  const { currentUser } = useAuth()
-
-  const isAdminMaster =
-    (currentUser as any)?.role === 'admin_master' || (currentUser as any)?.isMaster === true
 
   // Destaques State
   const featuredPlaces = useMemo(() => {
@@ -220,7 +215,7 @@ export function AdminDisplayManager() {
                   <TableHead className="w-12 text-center">#</TableHead>
                   <TableHead>Local</TableHead>
                   <TableHead>Tipo</TableHead>
-                  {isAdminMaster && <TableHead className="text-center">Cliques</TableHead>}
+                  <TableHead className="text-center">Cliques</TableHead>
                   <TableHead className="text-right">Ação</TableHead>
                 </TableRow>
               </TableHeader>
@@ -247,11 +242,9 @@ export function AdminDisplayManager() {
                         {p.category}
                       </Badge>
                     </TableCell>
-                    {isAdminMaster && (
-                      <TableCell className="text-center font-medium text-slate-600">
-                        {(p.highlightClickCount || 0).toLocaleString('pt-BR')}
-                      </TableCell>
-                    )}
+                    <TableCell className="text-center font-medium text-slate-600">
+                      {(p.highlightClickCount || 0).toLocaleString('pt-BR')}
+                    </TableCell>
                     <TableCell className="text-right">
                       <Button
                         variant="ghost"
@@ -267,10 +260,7 @@ export function AdminDisplayManager() {
                 ))}
                 {featuredPlaces.length === 0 && (
                   <TableRow>
-                    <TableCell
-                      colSpan={isAdminMaster ? 6 : 5}
-                      className="text-center py-8 text-slate-500 bg-white"
-                    >
+                    <TableCell colSpan={6} className="text-center py-8 text-slate-500 bg-white">
                       Nenhum destaque configurado.
                     </TableCell>
                   </TableRow>
